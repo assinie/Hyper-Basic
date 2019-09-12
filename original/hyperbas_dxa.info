@@ -1,0 +1,1351 @@
+        GLOBAL {
+            COMMENTS        3;
+            LABELBREAK      1;
+            OUTPUTNAME      "hyperbas.asm";
+            INPUTNAME       "hyperbas.rom";
+            STARTADDR       $C000;
+            PAGELENGTH      0;                  # No paging
+            CPU             "6502";
+        };
+
+label { addr $0000; size 2; name "RES"; };
+label { addr $0002; size 2; name "RESB"; };
+
+label { addr $0004; size 2; name "DECDEB"; comment "Paramètres pour décalage"; };
+label { addr $0006; size 2; name "DECFIN"; comment "Paramètres pour décalage"; };
+label { addr $0008; size 2; name "DECCIB"; comment "Paramètres pour décalage"; };
+label { addr $000a; size 2; name "DECTRV"; comment "Paramètres pour décalage"; };
+
+label { addr $000c; size 1; name "TR0"; comment "Travail, utilisation par HyperBasic à déterminer"; };
+label { addr $000d; size 1; name "TR1"; comment "Travail, utilisation par HyperBasic à déterminer"; };
+label { addr $000e; size 1; name "TR2"; comment "Travail, utilisation par HyperBasic à déterminer"; };
+label { addr $000f; size 1; name "TR3"; comment "Travail, utilisation par HyperBasic à déterminer"; };
+label { addr $0010; size 1; name "TR4"; comment "Travail, utilisation par HyperBasic à déterminer"; };
+label { addr $0011; size 1; name "TR5"; comment "Travail, utilisation par HyperBasic à déterminer"; };
+label { addr $0012; size 1; name "TR6"; comment "Travail, utilisation par HyperBasic à déterminer"; };
+label { addr $0013; size 1; name "TR7"; comment "Travail, utilisation par HyperBasic à déterminer"; };
+label { addr $0014; size 1; name "DEFAFF"; comment "Caractère aà afficher par défaut lors de conversion décimale (justification)"; };
+
+label { addr $005c; size 2; name "SCEDEB"; };
+label { addr $005e; size 2; name "SCEFIN"; };
+
+label { addr $0060; size 1; name "FACC1E"; };
+label { addr $0061; size 4; name "FACC1M"; };
+label { addr $0065; size 1; name "FACC1S"; };
+label { addr $0066; size 1; name "FACC1EX"; };
+label { addr $0067; size 1; name "FACC1J"; };
+
+label { addr $0068; size 1; name "FACC2E"; };
+label { addr $0069; size 4; name "FACC2M"; };
+label { addr $006d; size 1; name "FACC2S"; };
+label { addr $006e; size 1; name "FACC2PS"; };
+
+label { addr $008b; name "FLERR"; comment "1:sortie par overflow, 3: division par 0"; };
+
+label { addr $008c; name "fFlags"; comment "b7: 0->TRACE OFF, 1->SET b6: 0->RELEASE/GRAB, b2: 0->ERROFF, 1->ERRGOTO"; };
+label { addr $008d; name "fTalk"; comment "Flag TALK, b7: 0->SET, 1->OFF"; };
+
+
+label { addr $00be; size 2; name "ptr00BE"; comment "Pointeur pour xxx"; };
+label { addr $00c0; size 2; name "ptr00C0"; comment "Pointeur pour xxx"; };
+
+
+label { addr $0208; size 4; name "TABDRV"; comment "Activation des lecteurs"; };
+label { addr $020c; name "DRVDEF"; comment "Numéro (0-3) du lecteur par défaut"; };
+label { addr $020d; name "FLGTEL"; comment "b7:1-> haute résolution, b6:1-> mode minitel, b5:1-> mode degrés (0->radian), b2:1->BONJOUR.COM existe, b1:1->imprimante CENTRONICS détectée, b0:1-> STRATSED absent"; };
+label { addr $0210; name "TIMES"; comment "Horloge: 1/10 secondes"; };
+label { addr $0211; name "TIMES"; comment "Horloge: secondes"; };
+label { addr $0212; name "TIMEM"; comment "Horloge: minutes"; };
+label { addr $0213; name "TIMEH"; comment "Horloge: heures"; };
+label { addr $0220; size 4; name "SCRX"; comment "Coordonnée X pour chaque fenêtre"; };
+label { addr $0224; size 4; name "SCRY"; comment "Coordonnée Y"; };
+label { addr $0228; size 4; name "SCRDX"; comment "Début de la fenêtre"; };
+label { addr $022c; size 4; name "SCRFX"; comment "Fin de la fenêtre"; };
+label { addr $0230; size 4; name "SCRDY"; comment "Début de la fenêtre"; };
+label { addr $0234; size 4; name "SCRFY"; comment "Fin de la fenêtre"; };
+label { addr $027e; name "KBDCTC"; comment "b7:1 Ctrl+C"; };
+label { addr $0286; name "LPRX"; comment "Position dans la ligne"; };
+label { addr $0287; name "LPRY"; comment "Position dans la page"; };
+label { addr $0288; name "LPRFX"; comment "Largeur d'impression"; };
+label { addr $028a; name "FLGLPR"; comment "Parametrage imprimante. b7: prete, b6: pas gerer CRLF, b2: RS232/Centronics, b1: echo SCR, b0: pas de CR apres LF"; };
+label { addr $02aa; name "HRSPAT"; comment "Pattern"; };
+label { addr $02ab; name "HRSERR"; comment "Indicateur d'erreur dans les paramètres"; };
+label { addr $02b6; size 4; name "IOTAB2"; comment "Table des IO pour le canal 2"; };
+
+label { addr $02f0; size 4; name "CSRND"; comment "Nombre aleatoire (RANDOM)"; };
+
+label { addr $02f4; size 3; name "vnmi"; comment "Vecteur NMI (n° de banque, adresse)"; };
+label { addr $02fd; size 3; name "vaplic"; comment "N° banque, adresse TELEMATIC->LANGAGE"; };
+label { addr $02fa; size 3; name "virq"; comment "Vecteur IRQ"; };
+
+label { addr $031c; size 1; name "ACIADR"; comment "ACIA Registre de Données"; };
+label { addr $031d; size 1; name "ACIASR"; comment "ACIA Registre d'état"; };
+label { addr $031e; size 1; name "ACIACR"; comment "ACIA Registre de Commande"; };
+label { addr $031f; size 1; name "ACIACT"; comment "ACIA Registre de Controle"; };
+label { addr $0321; size 1; name "v2dra"; };
+
+label { addr $040c; name "EXBNK"; };
+label { addr $0414; size 3; name "VEXBNK"; };
+label { addr $0417; name "BNKCID"; };
+
+label { addr $0500; name "DRIVE"; comment "N° de lecteur"; };
+label { addr $0517; size 13; name "BUFNOM"; comment "Nom de fichier (drive+nom+extension)"; };
+label { addr $0528; name "VASALO0"; comment "Flag lecture/écriture"; };
+label { addr $052c; name "FTYPE"; comment "Type du fichier"; };
+label { addr $052d; size 2; name "DESALO"; comment "Adresse de début du fichier"; };
+label { addr $052f; size 2; name "FISALO"; comment "Adresse de fin du fichier"; };
+label { addr $0531; size 2; name "EXSALO"; comment "Adresse d'exécution"; };
+label { addr $0542; size 2; name "TAMPFC"; comment "Adresse de début des tampons fichier (initialisé à DOSBUFFERS par STARTUP)"; };
+label { addr $0544; size 2; name "BITMFC"; comment "(word) BitMap des tampons logiques (même convention que la BitMap disquette, 0->occupé, 1->libre))"; };
+label { addr $0548; name "FICNUM"; comment "Numéro logique du fichier (1 ou 2)"; };
+label { addr $0549; name "NBFIC"; comment "Nombre de fichiers autorisés par FILE"; };
+label { addr $054c; name "XFIELD"; comment "Pour fichier accès direct: xfield=n° de banque, xfield+1=adresse"; };
+label { addr $055d; size 3; name "EXTDEF"; comment "Extension par défaut"; };
+label { addr $0590; name "BUFEDT"; comment "Buffer Editeur de Texte"; };
+
+label { addr $0700; name "SP"; comment "Pointeur de la pile"; };
+label { addr $0701; name "Stack"; comment "Pile pour xxx"; };
+
+label { addr $07b7; name "errnb"; comment "Code erreur"; };
+label { addr $07b8; size 2; name "errnl"; comment "N° de la ligne contenant l'erreur ($ffff si mode direct)"; };
+label { addr $07ba; size 2; name "errgotonl"; comment "Adresse de la ligne pour le ERRGOTO"; };
+
+label { addr $07f1; size 1; name "save_S"; comment "Sauvegarde du registre S lors de l'appel à une appli Minitel"; };
+label { addr $07f9; size 2; name "ptr_07F9"; comment "Pointeur pour xxx"; };
+label { addr $07fb; size 2; name "HIMEM_val"; comment "Valeur de HIMEM (valeur initiale: $9800)"; };
+
+label { addr $c633; name "PrintAttentionMsg"; comment "Affiche 'Attention: '+msg erreur sur la ligne de status. Code erreur dans $CA"; };
+
+range { start $c69c; end $c6c9; type rtstable; };
+range { start $c6ca; end $c6e5; type bytetable; name "AtnMsg_table"; };
+
+label { addr $caad; name "Token2Type"; comment "Cherche l'instruction correspondant au token en $96-97 et renvoie son type en $94-95 et AX. Cherche à partir de $E8F9 si Y <$A0, sinon à partir de $DFB9"; };
+
+label { addr $d029; name "Error_IDXARY"; comment "Erreur: index de tableu trop grand";};
+label { addr $d162; name "Error_TRIGO"; comment "Erreur: 'LOG ou LN ou SQR ou ^ : parametre <= 0' ou 'division par 0'";};
+label { addr $d170; name "Error_TEXT"; comment "Erreur: ? mode TEXT";};
+label { addr $d173; name "Error_HIRES"; comment "Erreur: ? mode HIRES";};
+label { addr $d176; name "Error_MINITEL"; comment "Erreur: ? mode minitel";};
+label { addr $d179; name "Error_STRATSED"; comment "Erreur: pas de STRATSED";};
+label { addr $d17c; name "Error_OVERFLOW"; comment "Erreur: nombre trop grand";};
+label { addr $d17e; name "Error_X"; comment "Affiche une erreur dont le code est dans X. Gère ERRGOTO si actif";};
+label { addr $d2d2; name "Error_EXPRTYP"; comment "Erreur: mauvais type d'expression";};
+
+range { start $d5e0; end $d89f; type texttable; };
+label { addr $d86f; name "hyperbas_signature"; };
+
+
+label { addr $df7b; name "Push"; };
+label { addr $df85; name "Pop"; };
+label { addr $df90; name "EQPop"; comment "Récupère le sommet de la pile si il est egale à ACC"; };
+
+label { addr $d44f; name "GetByte"; comment "Lit une valeur <255, résultat dans ACC"; };
+label { addr $d484; name "GetWord"; comment "Lit une valeur <65536, résultat dans AY (ACC=LSB)"; };
+
+label { addr $d507; name "TraceLine"; comment "Assemblé en début de ligne pour gérer le mode TRACE et CTRL+C"; };
+label { addr $d573; name "Break"; comment "CTRL+C ou STOP"; };
+
+label { addr $d57b; name "PrintErrMsg1"; };
+label { addr $d581; name "PrintErrMsg2"; };
+label { addr $d587; name "PrintErrMsg4"; };
+label { addr $d58d; name "PrintErrMsg3"; };
+
+range { start $d5d7; end $d5da; type bytetable; name "ERRMSG_table0"; comment "Correspondance pour les caractères [$1C..$1F]"; };
+label { addr $d5db; name "Print0_SPACE"; comment "Affiche un ' ' sur le canal 0"; };
+# On charge A et Y avec l'adresse de la table-1, X=N° du message a afficher
+label { addr $d5e0; name "ERRMSG_table0"; comment "Mots utilisés par les tables suivantes. Dernier caractère: b7=1."; };
+label { addr $d697; name "ERRMSG_table1"; comment "Erreurs d'exécution. Dernier caractère: b1=1, un octet <$1C:  index dans la table1."; };
+label { addr $d771; name "ERRMSG_table2"; };
+label { addr $d7d7; name "ERRMSG_table3"; };
+label { addr $d831; name "ERRMSG_table4"; };
+
+label { addr $d8a0; name "Passe_Ia"; comment "Début Passe Ia"; };
+label { addr $d8d7; name "Passe_Ib"; comment "Début Passe Ib"; };
+label { addr $d998; name "Passe_Ic"; comment "Début Passe Ic"; };
+label { addr $da63; name "Passe_II"; comment "Début Passe II (assemblage) - Label non nécessaire, juste pour avoir un commentaire"; };
+
+label { addr $dab8; name "LM_RTS"; comment "Ajoute RTS au programme LM"; };
+label { addr $df42; name "LM_JSR_D368_Ptr92"; comment "Ajoute JSR $D368 suivi des 2 octets contenus en $92-$93 au programme LM"; };
+label { addr $df46; name "LM_JSR_XY_Ptr92"; comment "Ajoute JSR XY suivi des 2 octets contenus en $92-$93 au programme LM"; };
+label { addr $df52; name "LM_JSR_XY"; comment "Ajoute JSR XY au programme LM (X=LSB)"; };
+label { addr $df5c; name "LM_Put_A"; comment "Ajoute l'octet contenu dans le registre A au programme LM"; };
+
+label { addr $df6b; name "PrintPasse_A"; comment "Affiche le n° de passe en cours si TALK SET (ACC=n° de passe)"; };
+
+# Debut de la liste des mots clés.
+#
+# Structure:
+# Octets 0-1: Lien vers l'instruction suivante (dernier mot de la liste si Octet1 == 0)
+# Octet  2  : Type d'instruction (1: instruction, 2: fonction, 3: operateur)
+# Octet  3
+# Octet  4  :+ Code de l'instruction dans le texte BASIC
+# Octet  5  :+
+# Octet  6  : Longueur du nom de l'instruction+7 (Si type != 1 ou type == 1 et Octet3 == 0)
+# Octet  7..n: Instruction
+# Octet  n+1: Si $80,$83 -> Compile un JSR <instruction>
+# Octet  n+2: Si $80,$02 -> Compile les 2 instructions qui suivent l'entête
+#             Si $81,$83 -> Compile JSR $d368 vvv JSR <instruction> (vvv := adresse du paramètre)
+#                $01,$84,$83 -> Compile JSR $d368 vvv1 JSR $d4d7 JSR $d368 vvv2 JSR <instruction>  (exemple POKE)
+#                $01,$81,$83 -> Compile JSR $d368 vvv1 JSR $d4d7 JSR $d368 vvv2 JSR <instruction>  (exemple DOKE)
+#                $90,$83 -> SEC JSR <instruction> ou CLC JSR <instruction> en fonction du parametre qui suit l'instruction: SET ou OFF (exemple CURSOR)
+#                $82,$83 -> JSR $d368 vvv JSR <instruction> (exemple EXT "xx")
+#                $8d,$83  -> JSR <instruction> aaa (aaa: adresse de la lignei nnn) (exemple ERRGOTO nnn|label)
+
+range { start $dfb9; end $dfba; type addrtable; name "]_lfa"; };
+range { start $dfbb; end $dfbf; type bytetable; name "]_pfa"; };
+range { start $dfc0; end $dfc0; type texttable; name "]"; };
+range { start $dfc1; end $dfc2; type bytetable; };
+
+range { start $dfc3; end $dfc4; type addrtable; name "RETURN_lfa"; };
+range { start $dfc5; end $dfc9; type bytetable; name "RETURN_pfa"; };
+range { start $dfca; end $dfcf; type texttable; name "RETURN"; };
+range { start $dfd0; end $dfd1; type bytetable; };
+
+label { addr $dfda; name "Error_RETURN"; comment "Erreur: RETURN sans GOSUB";};
+
+range { start $dfdf; end $dfe0; type addrtable; name "END_lfa"; };
+range { start $dfe1; end $dfe5; type bytetable; name "END_pfa"; };
+range { start $dfe6; end $dfe8; type texttable; name "END"; };
+range { start $dfe9; end $dfea; type bytetable; };
+
+range { start $dfef; end $dff0; type addrtable; name "STOP_lfa"; };
+range { start $dff1; end $dff5; type bytetable; name "STOP_pfa"; };
+range { start $dff6; end $dff9; type texttable; name "STOP"; };
+range { start $dffa; end $dffb; type bytetable; };
+
+range { start $dfff; end $e000; type addrtable; name "'_lfa"; };
+range { start $e001; end $e005; type bytetable; name "'_pfa"; };
+range { start $e006; end $e006; type texttable; name "'"; };
+range { start $e007; end $e008; type bytetable; };
+
+range { start $e009; end $e00a; type addrtable; name "FOR_lfa"; };
+range { start $e00b; end $e00f; type bytetable; name "FOR_pfa"; };
+range { start $e010; end $e012; type texttable; name "FOR"; };
+range { start $e013; end $e01b; type bytetable; };
+
+range { start $e06d; end $e06e; type addrtable; name "REPEAT_lfa"; };
+range { start $e06f; end $e073; type bytetable; name "REPEAT_pfa"; };
+range { start $e074; end $e079; type texttable; name "REPEAT"; };
+range { start $e07a; end $e07b; type bytetable; };
+
+range { start $e07c; end $e07d; type addrtable; name "COUNT_lfa"; };
+range { start $e07e; end $e082; type bytetable; name "COUNT_pfa"; };
+range { start $e083; end $e087; type texttable; name "COUNT"; };
+range { start $e088; end $e089; type bytetable; };
+
+range { start $e0bd; end $e0be; type addrtable; name "WHILE_lfa"; };
+range { start $e0bf; end $e0c3; type bytetable; name "WHILE_pfa"; };
+range { start $e0c4; end $e0c8; type texttable; name "WHILE"; };
+range { start $e0c9; end $e0ca; type bytetable; };
+
+label { addr $e0d2; name "Error_NEXT"; comment "Erreur: mauvais NEXT";};
+
+range { start $e0d7; end $e0d8; type addrtable; name "NEXT_lfa"; };
+range { start $e0d9; end $e0dd; type bytetable; name "NEXT_pfa"; };
+range { start $e0de; end $e0e1; type texttable; name "NEXT"; };
+range { start $e0e2; end $e0e4; type bytetable; };
+
+range { start $e224; end $e225; type addrtable; name "UNTIL_lfa"; };
+range { start $e226; end $e22a; type bytetable; name "UNTIL_pfa"; };
+range { start $e22b; end $e22f; type texttable; name "UNTIL"; };
+range { start $e230; end $e231; type bytetable; };
+
+range { start $e237; end $e238; type addrtable; name "UNCOUNT_lfa"; };
+range { start $e239; end $e23d; type bytetable; name "UNCOUNT_pfa"; };
+range { start $e23e; end $e244; type texttable; name "UNCOUNT"; };
+range { start $e245; end $e246; type bytetable; };
+
+range { start $e252; end $e253; type addrtable; name "WEND_lfa"; };
+range { start $e254; end $e258; type bytetable; name "WEND_pfa"; };
+range { start $e259; end $e25c; type texttable; name "WEND"; };
+range { start $e25d; end $e25e; type bytetable; };
+
+range { start $e260; end $e261; type addrtable; name "^_lfa"; };
+range { start $e262; end $e266; type bytetable; name "^_pfa"; };
+range { start $e267; end $e267; type texttable; name "^"; };
+range { start $e268; end $e269; type bytetable; };
+
+range { start $e278; end $e279; type addrtable; name "*_lfa"; };
+range { start $e27a; end $e27e; type bytetable; name "*_pfa"; };
+range { start $e27f; end $e27f; type texttable; name "*"; };
+range { start $e280; end $e281; type bytetable; };
+
+range { start $e286; end $e287; type addrtable; name "/_lfa"; };
+range { start $e288; end $e28c; type bytetable; name "/_pfa"; };
+range { start $e28d; end $e28d; type texttable; name "/"; };
+range { start $e28e; end $e28f; type bytetable; };
+
+range { start $e294; end $e295; type addrtable; name "+_lfa"; };
+range { start $e296; end $e29a; type bytetable; name "+_pfa"; };
+range { start $e29b; end $e29b; type texttable; name "+"; };
+range { start $e29c; end $e29d; type bytetable; };
+
+label { addr $e2c1; name "Error_STRLEN"; comment "Erreur: chaine trop longue";};
+
+range { start $e2c6; end $e2c7; type addrtable; name "-_lfa"; };
+range { start $e2c8; end $e2cc; type bytetable; name "-_pfa"; };
+range { start $e2cd; end $e2cd; type texttable; name "-"; };
+range { start $e2ce; end $e2cf; type bytetable; };
+
+range { start $e2d4; end $e2d5; type addrtable; name "=_lfa"; };
+range { start $e2d6; end $e2da; type bytetable; name "=_pfa"; };
+range { start $e2db; end $e2db; type texttable; name "="; };
+range { start $e2dc; end $e2dd; type bytetable; };
+
+range { start $e2e2; end $e2e3; type addrtable; name ">=_lfa"; };
+range { start $e2e4; end $e2e8; type bytetable; name ">=_pfa"; };
+range { start $e2e9; end $e2ea; type texttable; name ">="; };
+range { start $e2eb; end $e2ec; type bytetable; };
+
+range { start $e2f1; end $e2f2; type addrtable; name "<=_lfa"; };
+range { start $e2f3; end $e2f7; type bytetable; name "<=_pfa"; };
+range { start $e2f8; end $e2f9; type texttable; name "<="; };
+range { start $e2fa; end $e2fb; type bytetable; };
+
+range { start $e300; end $e301; type addrtable; name "<>_lfa"; };
+range { start $e302; end $e306; type bytetable; name "<>_pfa"; };
+range { start $e307; end $e308; type texttable; name "<>"; };
+range { start $e309; end $e30a; type bytetable; };
+
+range { start $e30f; end $e310; type addrtable; name ">_lfa"; };
+range { start $e311; end $e315; type bytetable; name ">_pfa"; };
+range { start $e316; end $e316; type texttable; name ">"; };
+range { start $e317; end $e318; type bytetable; };
+
+range { start $e31d; end $e31e; type addrtable; name "<_lfa"; };
+range { start $e31f; end $e323; type bytetable; name "<_pfa"; };
+range { start $e324; end $e324; type texttable; name "<"; };
+range { start $e325; end $e326; type bytetable; };
+
+range { start $e3b9; end $e3ba; type addrtable; name "XOR_lfa"; };
+range { start $e3bb; end $e3bf; type bytetable; name "XOR_pfa"; };
+range { start $e3c0; end $e3c2; type texttable; name "XOR"; };
+range { start $e3c3; end $e3c4; type bytetable; };
+
+range { start $e3d4; end $e3d5; type addrtable; name "AND_lfa"; };
+range { start $e3d6; end $e3da; type bytetable; name "AND_pfa"; };
+range { start $e3db; end $e3dd; type texttable; name "AND"; };
+range { start $e3de; end $e3df; type bytetable; };
+
+range { start $e3f7; end $e3f8; type addrtable; name "OR_lfa"; };
+range { start $e3f9; end $e3fd; type bytetable; name "OR_pfa"; };
+range { start $e3fe; end $e3ff; type texttable; name "OR"; };
+range { start $e400; end $e401; type bytetable; };
+
+# ---
+range { start $e468; end $e48f; type bytetable; };
+label { addr $e490; size 40; name "LE490"; comment "Offsets dans la table $E411. Octet 0: offset debut, Octet 1: offset fin"; };
+range { start $e490; end $e4b8; type bytetable; };
+# ---
+
+range { start $e52b; end $e52c; type addrtable; name "COS_lfa"; };
+range { start $e52d; end $e531; type bytetable; name "COS_pfa"; };
+range { start $e532; end $e534; type texttable; name "COS"; };
+range { start $e535; end $e536; type bytetable; };
+
+range { start $e53b; end $e53c; type addrtable; name "SIN_lfa"; };
+range { start $e53d; end $e541; type bytetable; name "SIN_pfa"; };
+range { start $e542; end $e544; type texttable; name "SIN"; };
+range { start $e545; end $e546; type bytetable; };
+
+range { start $e54b; end $e54c; type addrtable; name "ABS_lfa"; };
+range { start $e54d; end $e551; type bytetable; name "ABS_pfa"; };
+range { start $e552; end $e554; type texttable; name "ABS"; };
+range { start $e555; end $e556; type bytetable; };
+
+range { start $e55e; end $e55f; type addrtable; name "ATN_lfa"; };
+range { start $e560; end $e564; type bytetable; name "ATN_pfa"; };
+range { start $e565; end $e567; type texttable; name "ATN"; };
+range { start $e568; end $e569; type bytetable; };
+
+range { start $e56e; end $e56f; type addrtable; name "DEEK_lfa"; };
+range { start $e570; end $e574; type bytetable; name "DEEK_pfa"; };
+range { start $e575; end $e578; type texttable; name "DEEK"; };
+range { start $e579; end $e57a; type bytetable; };
+
+range { start $e58b; end $e58c; type addrtable; name "DEG_lfa"; };
+range { start $e58d; end $e591; type bytetable; name "DEG_pfa"; };
+range { start $e592; end $e594; type texttable; name "DEG"; };
+range { start $e595; end $e596; type bytetable; };
+label { addr $e599;  name "TrigoFct"; comment "Exécute une fonction Trigo, code de la fonction dans ACC"; };
+
+range { start $e5a5; end $e5a6; type addrtable; name "EXP_lfa"; };
+range { start $e5a7; end $e5ab; type bytetable; name "EXP_pfa"; };
+range { start $e5ac; end $e5ae; type texttable; name "EXP"; };
+range { start $e5af; end $e5b0; type bytetable; };
+
+range { start $e5b5; end $e5b6; type addrtable; name "LN_lfa"; };
+range { start $e5b7; end $e5bb; type bytetable; name "LN_pfa"; };
+range { start $e5bc; end $e5bd; type texttable; name "LN"; };
+range { start $e5be; end $e5bf; type bytetable; };
+
+range { start $e5c4; end $e5c5; type addrtable; name "LOG_lfa"; };
+range { start $e5c6; end $e5ca; type bytetable; name "LOG_pfa"; };
+range { start $e5cb; end $e5cd; type texttable; name "LOG"; };
+range { start $e5ce; end $e5cf; type bytetable; };
+
+range { start $e5d4; end $e5d5; type addrtable; name "PEEK_lfa"; };
+range { start $e5d6; end $e5da; type bytetable; name "PEEK_pfa"; };
+range { start $e5db; end $e5de; type texttable; name "PEEK"; };
+range { start $e5df; end $e5e0; type bytetable; };
+
+range { start $e5ed; end $e5ee; type addrtable; name "RAD_lfa"; };
+range { start $e5ef; end $e5f3; type bytetable; name "RAD_pfa"; };
+range { start $e5f4; end $e5f6; type texttable; name "RAD"; };
+range { start $e5f7; end $e5f8; type bytetable; };
+
+range { start $e5fd; end $e5fe; type addrtable; name "RND_lfa"; };
+range { start $e5ff; end $e603; type bytetable; name "RND_pfa"; };
+range { start $e604; end $e606; type texttable; name "RND"; };
+range { start $e607; end $e608; type bytetable; };
+
+range { start $e60d; end $e60e; type addrtable; name "SQR_lfa"; };
+range { start $e60f; end $e613; type bytetable; name "SQR_pfa"; };
+range { start $e614; end $e616; type texttable; name "SQR"; };
+range { start $e617; end $e618; type bytetable; };
+
+range { start $e61e; end $e61f; type addrtable; name "TAN_lfa"; };
+range { start $e620; end $e624; type bytetable; name "TAN_pfa"; };
+range { start $e625; end $e627; type texttable; name "TAN"; };
+range { start $e628; end $e629; type bytetable; };
+
+range { start $e62f; end $e630; type addrtable; name "LOB$_lfa"; };
+range { start $e631; end $e635; type bytetable; name "LOB$_pfa"; };
+range { start $e636; end $e639; type texttable; name "LOB$"; };
+range { start $e63a; end $e63b; type bytetable; };
+
+range { start $e67b; end $e67c; type addrtable; name "LO$_lfa"; };
+range { start $e67d; end $e681; type bytetable; name "LO$_pfa"; };
+range { start $e682; end $e684; type texttable; name "LO$"; };
+range { start $e685; end $e686; type bytetable; };
+
+range { start $e68a; end $e68b; type addrtable; name "UP$_lfa"; };
+range { start $e68c; end $e690; type bytetable; name "UP$_pfa"; };
+range { start $e691; end $e693; type texttable; name "UP$"; };
+range { start $e694; end $e695; type bytetable; };
+
+range { start $e699; end $e69a; type addrtable; name "BIN$_lfa"; };
+range { start $e69b; end $e69f; type bytetable; name "BIN$_pfa"; };
+range { start $e6a0; end $e6a3; type texttable; name "BIN$"; };
+range { start $e6a4; end $e6a5; type bytetable; };
+
+range { start $e6da; end $e6db; type addrtable; name "CHR$_lfa"; };
+range { start $e6dc; end $e6e0; type bytetable; name "CHR$_pfa"; };
+range { start $e6e1; end $e6e4; type texttable; name "CHR$"; };
+range { start $e6e5; end $e6e6; type bytetable; };
+
+range { start $e6f6; end $e6f7; type addrtable; name "HEX$_lfa"; };
+range { start $e6f8; end $e6fc; type bytetable; name "HEX$_pfa"; };
+range { start $e6fd; end $e700; type texttable; name "HEX$"; };
+range { start $e701; end $e702; type bytetable; };
+
+range { start $e740; end $e741; type addrtable; name "SPC$_lfa"; };
+range { start $e742; end $e746; type bytetable; name "SPC$_pfa"; };
+range { start $e747; end $e74a; type texttable; name "SPC$"; };
+range { start $e74b; end $e74c; type bytetable; };
+
+range { start $e75f; end $e760; type addrtable; name "STR$_lfa"; };
+range { start $e761; end $e765; type bytetable; name "STR$_pfa"; };
+range { start $e766; end $e769; type texttable; name "STR$"; };
+range { start $e76a; end $e76b; type bytetable; };
+
+range { start $e780; end $e781; type addrtable; name "ASC_lfa"; };
+range { start $e782; end $e786; type bytetable; name "ASC_pfa"; };
+range { start $e787; end $e789; type texttable; name "ASC"; };
+range { start $e78a; end $e78b; type bytetable; };
+
+range { start $e79f; end $e7a0; type addrtable; name "LEN_lfa"; };
+range { start $e7a1; end $e7a5; type bytetable; name "LEN_pfa"; };
+range { start $e7a6; end $e7a8; type texttable; name "LEN"; };
+range { start $e7a9; end $e7aa; type bytetable; };
+
+range { start $e7b0; end $e7b1; type addrtable; name "VAL_lfa"; };
+range { start $e7b2; end $e7b6; type bytetable; name "VAL_pfa"; };
+range { start $e7b7; end $e7b9; type texttable; name "VAL"; };
+range { start $e7ba; end $e7bb; type bytetable; };
+
+range { start $e7db; end $e7dc; type addrtable; name "TRUE_lfa"; };
+range { start $e7dd; end $e7e1; type bytetable; name "TRUE_pfa"; };
+range { start $e7e2; end $e7e5; type texttable; name "TRUE"; };
+range { start $e7e6; end $e7e7; type bytetable; };
+
+range { start $e807; end $e808; type addrtable; name "FALSE_lfa"; };
+range { start $e809; end $e80d; type bytetable; name "FALSE_pfa"; };
+range { start $e80e; end $e812; type texttable; name "FALSE"; };
+range { start $e813; end $e814; type bytetable; };
+
+range { start $e818; end $e819; type addrtable; name "PI_lfa"; };
+range { start $e81a; end $e81e; type bytetable; name "PI_pfa"; };
+range { start $e81f; end $e820; type texttable; name "PI"; };
+range { start $e821; end $e822; type bytetable; };
+
+range { start $e82d; end $e82e; type addrtable; name "SGN_lfa"; };
+range { start $e82f; end $e833; type bytetable; name "SGN_pfa"; };
+range { start $e834; end $e836; type texttable; name "SGN"; };
+range { start $e837; end $e838; type bytetable; };
+
+range { start $e851; end $e852; type addrtable; name "INT_lfa"; };
+range { start $e853; end $e857; type bytetable; name "INT_pfa"; };
+range { start $e858; end $e85a; type texttable; name "INT"; };
+range { start $e85b; end $e85c; type bytetable; };
+
+range { start $e864; end $e865; type addrtable; name "KEY$_lfa"; };
+range { start $e866; end $e86a; type bytetable; name "KEY$_pfa"; };
+range { start $e86b; end $e86e; type texttable; name "KEY$"; };
+range { start $e86f; end $e870; type bytetable; };
+
+range { start $e88d; end $e88e; type addrtable; name "RAND_lfa"; };
+range { start $e88f; end $e893; type bytetable; name "RAND_pfa"; };
+range { start $e894; end $e897; type texttable; name "RAND"; };
+range { start $e898; end $e899; type bytetable; };
+
+range { start $e89f; end $e8a0; type addrtable; name "REM_lfa"; };
+range { start $e8a1; end $e8a5; type bytetable; name "REM_pfa"; };
+range { start $e8a6; end $e8a8; type texttable; name "REM"; };
+range { start $e8a9; end $e8aa; type bytetable; };
+
+range { start $e8ab; end $e8ac; type addrtable; name "GOTO_lfa"; };
+range { start $e8ad; end $e8b1; type bytetable; name "GOTO_pfa"; };
+range { start $e8b2; end $e8b5; type texttable; name "GOTO"; };
+range { start $e8b6; end $e8b7; type bytetable; };
+
+range { start $e8b9; end $e8ba; type addrtable; name "GOSUB_lfa"; };
+range { start $e8bb; end $e8bf; type bytetable; name "GOSUB_pfa"; };
+range { start $e8c0; end $e8c4; type texttable; name "GOSUB"; };
+range { start $e8c5; end $e8c6; type bytetable; };
+
+label { addr $e8d3; name "Error_GOSUB"; comment "Erreur: trop de GOSUB";};
+
+range { start $e8d8; end $e8d9; type addrtable; name "CLS_lfa"; };
+range { start $e8da; end $e8de; type bytetable; name "CLS_pfa"; };
+range { start $e8df; end $e8e1; type texttable; name "CLS"; };
+range { start $e8e2; end $e8e3; type bytetable; };
+
+range { start $e8e9; end $e8ea; type addrtable; name "PRINT_lfa"; };
+range { start $e8eb; end $e8ef; type bytetable; name "PRINT_pfa"; };
+range { start $e8f0; end $e8f4; type texttable; name "PRINT"; };
+range { start $e8f5; end $e8f8; type bytetable; };
+
+range { start $e9ac; end $e9ad; type addrtable; name "LPRINT_lfa"; };
+range { start $e9ae; end $e9b2; type bytetable; name "LPRINT_pfa"; };
+range { start $e9b3; end $e9b8; type texttable; name "LPRINT"; };
+range { start $e9b9; end $e9bb; type bytetable; };
+
+range { start $e9c1; end $e9c2; type addrtable; name "SPRINT_lfa"; };
+range { start $e9c3; end $e9c7; type bytetable; name "SPRINT_pfa"; };
+range { start $e9c8; end $e9cd; type texttable; name "SPRINT"; };
+range { start $e9ce; end $e9d0; type bytetable; };
+
+range { start $e9d6; end $e9d7; type addrtable; name "MPRINT_lfa"; };
+range { start $e9d8; end $e9dc; type bytetable; name "MPRINT_pfa"; };
+range { start $e9dd; end $e9e2; type texttable; name "MPRINT"; };
+range { start $e9e3; end $e9e5; type bytetable; };
+
+range { start $e9eb; end $e9ec; type addrtable; name "GET_lfa"; };
+range { start $e9ed; end $e9f1; type bytetable; name "GET_pfa"; };
+range { start $e9f2; end $e9f4; type texttable; name "GET"; };
+range { start $e9f5; end $e9f8; type bytetable; };
+
+range { start $ea11; end $ea12; type addrtable; name "INPUT'_lfa"; };
+range { start $ea13; end $ea17; type bytetable; name "INPUT'_pfa"; };
+range { start $ea18; end $ea1d; type texttable; name "INPUT'"; };
+range { start $ea1e; end $ea1f; type bytetable; };
+
+range { start $ea7a; end $ea7b; type addrtable; name "null_lfa"; };
+range { start $ea7c; end $ea80; type bytetable; name "null_pfa"; };
+range { start $ea81; end $ea81; type texttable; name "null"; };
+range { start $ea82; end $ea83; type bytetable; };
+
+range { start $ea87; end $ea88; type addrtable; name "IF_lfa"; };
+range { start $ea89; end $ea8d; type bytetable; name "IF_pfa"; };
+range { start $ea8e; end $ea8f; type texttable; name "IF"; };
+range { start $ea90; end $ea92; type bytetable; };
+
+range { start $ea98; end $ea99; type addrtable; name "ERRGOTO_lfa"; };
+range { start $ea9a; end $ea9e; type bytetable; name "ERRGOTO_pfa"; };
+range { start $ea9f; end $eaa5; type texttable; name "ERRGOTO"; };
+range { start $eaa6; end $eaa7; type bytetable; };
+
+range { start $eacb; end $eacc; type addrtable; name "MID$_lfa"; };
+range { start $eacd; end $ead1; type bytetable; name "MID$_pfa"; };
+range { start $ead2; end $ead5; type texttable; name "MID$"; };
+range { start $ead6; end $ead7; type bytetable; };
+
+range { start $eb1f; end $eb20; type addrtable; name "LEFT$_lfa"; };
+range { start $eb21; end $eb25; type bytetable; name "LEFT$_pfa"; };
+range { start $eb26; end $eb2a; type texttable; name "LEFT$"; };
+range { start $eb2b; end $eb2c; type bytetable; };
+
+range { start $eb7b; end $eb7c; type addrtable; name "RIGHT$_lfa"; };
+range { start $eb7d; end $eb81; type bytetable; name "RIGHT$_pfa"; };
+range { start $eb82; end $eb87; type texttable; name "RIGHT$"; };
+range { start $eb88; end $eb89; type bytetable; };
+
+# ---
+range { start $eb98; end $ebbf; type texttable; name "InstParam_table"; comment "Paramètres de certaines instructions"; };
+# ---
+
+range { start $ebc0; end $ebc1; type addrtable; name "HIRES_lfa"; };
+range { start $ebc2; end $ebc6; type bytetable; name "HIRES_pfa"; };
+range { start $ebc7; end $ebcb; type texttable; name "HIRES"; };
+range { start $ebcc; end $ebcd; type bytetable; };
+
+range { start $ebd4; end $ebd5; type addrtable; name "TEXT_lfa"; };
+range { start $ebd6; end $ebda; type bytetable; name "TEXT_pfa"; };
+range { start $ebdb; end $ebde; type texttable; name "TEXT"; };
+range { start $ebdf; end $ebe0; type bytetable; };
+
+range { start $ebe3; end $ebe4; type addrtable; name "LIST_lfa"; };
+range { start $ebe5; end $ebe9; type bytetable; name "LIST_pfa"; };
+range { start $ebea; end $ebed; type texttable; name "LIST"; };
+range { start $ebee; end $ebf0; type bytetable; };
+
+range { start $ec27; end $ec28; type addrtable; name "TRACE_lfa"; };
+range { start $ec29; end $ec2d; type bytetable; name "TRACE_pfa"; };
+range { start $ec2e; end $ec32; type texttable; name "TRACE"; };
+range { start $ec33; end $ec34; type bytetable; };
+
+range { start $ec53; end $ec54; type addrtable; name "WORD_lfa"; };
+range { start $ec55; end $ec59; type bytetable; name "WORD_pfa"; };
+range { start $ec5a; end $ec5d; type texttable; name "WORD"; };
+range { start $ec5e; end $ec5f; type bytetable; };
+
+range { start $ecaa; end $ecab; type addrtable; name "NEW_lfa"; };
+range { start $ecac; end $ecb0; type bytetable; name "NEW_pfa"; };
+range { start $ecb1; end $ecb3; type texttable; name "NEW"; };
+range { start $ecb4; end $ecb5; type bytetable; };
+
+range { start $ecbc; end $ecbd; type addrtable; name "RUN_lfa"; };
+range { start $ecbe; end $ecc2; type bytetable; name "RUN_pfa"; };
+range { start $ecc3; end $ecc5; type texttable; name "RUN"; };
+range { start $ecc6; end $ecc8; type bytetable; };
+
+range { start $ece7; end $ece8; type addrtable; name "OUPS_lfa"; };
+range { start $ece9; end $eced; type bytetable; name "OUPS_pfa"; };
+range { start $ecee; end $ecf1; type texttable; name "OUPS"; };
+range { start $ecf2; end $ecf3; type bytetable; };
+
+range { start $ecf6; end $ecf7; type addrtable; name "HELP_lfa"; };
+range { start $ecf8; end $ecfc; type bytetable; name "HELP_pfa"; };
+range { start $ecfd; end $ed00; type texttable; name "HELP"; };
+range { start $ed01; end $ed02; type bytetable; };
+
+range { start $ed08; end $ed09; type addrtable; name "POKE_lfa"; };
+range { start $ed0a; end $ed0e; type bytetable; name "POKE_pfa"; };
+range { start $ed0f; end $ed12; type texttable; name "POKE"; };
+range { start $ed13; end $ed15; type bytetable; };
+label { addr $ed25;  name "POKE_str"; comment "POKE \"chaine\""; };
+
+range { start $ed32; end $ed33; type addrtable; name "DOKE_lfa"; };
+range { start $ed34; end $ed38; type bytetable; name "DOKE_pfa"; };
+range { start $ed39; end $ed3c; type texttable; name "DOKE"; };
+range { start $ed3d; end $ed3f; type bytetable; };
+
+range { start $ed50; end $ed51; type addrtable; name "CALL_lfa"; };
+range { start $ed52; end $ed56; type bytetable; name "CALL_pfa"; };
+range { start $ed57; end $ed5a; type texttable; name "CALL"; };
+range { start $ed5b; end $ed5c; type bytetable; };
+
+range { start $ed63; end $ed64; type addrtable; name "PING_lfa"; };
+range { start $ed65; end $ed69; type bytetable; name "PING_pfa"; };
+range { start $ed6a; end $ed6d; type texttable; name "PING"; };
+range { start $ed6e; end $ed6f; type bytetable; };
+
+range { start $ed72; end $ed73; type addrtable; name "SHOOT_lfa"; };
+range { start $ed74; end $ed78; type bytetable; name "SHOOT_pfa"; };
+range { start $ed79; end $ed7d; type texttable; name "SHOOT"; };
+range { start $ed7e; end $ed7f; type bytetable; };
+
+range { start $ed82; end $ed83; type addrtable; name "EXPLODE_lfa"; };
+range { start $ed84; end $ed88; type bytetable; name "EXPLODE_pfa"; };
+range { start $ed89; end $ed8f; type texttable; name "EXPLODE"; };
+range { start $ed90; end $ed91; type bytetable; };
+
+range { start $ed94; end $ed95; type addrtable; name "ZAP_lfa"; };
+range { start $ed96; end $ed9a; type bytetable; name "ZAP_pfa"; };
+range { start $ed9b; end $ed9d; type texttable; name "ZAP"; };
+range { start $ed9e; end $ed9f; type bytetable; };
+
+range { start $eda2; end $eda3; type addrtable; name "NMI_lfa"; };
+range { start $eda4; end $eda8; type bytetable; name "NMI_pfa"; };
+range { start $eda9; end $edab; type texttable; name "NMI"; };
+range { start $edac; end $edad; type bytetable; };
+
+range { start $edb1; end $edb2; type addrtable; name "RESET_lfa"; };
+range { start $edb3; end $edb7; type bytetable; name "RESET_pfa"; };
+range { start $edb8; end $edbc; type texttable; name "RESET"; };
+range { start $edbd; end $edbe; type bytetable; };
+
+range { start $edd5; end $edd6; type addrtable; name "WIDTH_lfa"; };
+range { start $edd7; end $eddb; type bytetable; name "WIDTH_pfa"; };
+range { start $eddc; end $ede0; type texttable; name "WIDTH"; };
+range { start $ede1; end $ede2; type bytetable; };
+
+range { start $edf0; end $edf1; type addrtable; name "LWIDTH_lfa"; };
+range { start $edf2; end $edf6; type bytetable; name "LWIDTH_pfa"; };
+range { start $edf7; end $edfc; type texttable; name "LWIDTH"; };
+range { start $edfd; end $edfe; type bytetable; };
+
+range { start $ee08; end $ee09; type addrtable; name "GRAB_lfa"; };
+range { start $ee0a; end $ee0e; type bytetable; name "GRAB_pfa"; };
+range { start $ee0f; end $ee12; type texttable; name "GRAB"; };
+range { start $ee13; end $ee14; type bytetable; };
+
+range { start $ee19; end $ee1a; type addrtable; name "RELEASE_lfa"; };
+range { start $ee1b; end $ee1f; type bytetable; name "RELEASE_pfa"; };
+range { start $ee20; end $ee26; type texttable; name "RELEASE"; };
+range { start $ee27; end $ee28; type bytetable; };
+
+range { start $ee3c; end $ee3d; type addrtable; name "LLIST_lfa"; };
+range { start $ee3e; end $ee42; type bytetable; name "LLIST_pfa"; };
+range { start $ee43; end $ee47; type texttable; name "LLIST"; };
+range { start $ee48; end $ee4a; type bytetable; };
+
+range { start $ee50; end $ee51; type addrtable; name "MLIST_lfa"; };
+range { start $ee52; end $ee56; type bytetable; name "MLIST_pfa"; };
+range { start $ee57; end $ee5b; type texttable; name "MLIST"; };
+range { start $ee5c; end $ee5e; type bytetable; };
+
+range { start $ee64; end $ee65; type addrtable; name "SLIST_lfa"; };
+range { start $ee66; end $ee6a; type bytetable; name "SLIST_pfa"; };
+range { start $ee6b; end $ee6f; type texttable; name "SLIST"; };
+range { start $ee70; end $ee72; type bytetable; };
+
+range { start $ee78; end $ee79; type addrtable; name "LFEED_lfa"; };
+range { start $ee7a; end $ee7e; type bytetable; name "LFEED_pfa"; };
+range { start $ee7f; end $ee83; type texttable; name "LFEED"; };
+range { start $ee84; end $ee85; type bytetable; };
+
+range { start $ee92; end $ee93; type addrtable; name "AIDE_lfa"; };
+range { start $ee94; end $ee98; type bytetable; name "AIDE_pfa"; };
+range { start $ee99; end $ee9c; type texttable; name "AIDE"; };
+range { start $ee9d; end $ee9e; type bytetable; };
+
+range { start $eea2; end $eea3; type addrtable; name "FUNCTION_lfa"; };
+range { start $eea4; end $eea8; type bytetable; name "FUNCTION_pfa"; };
+range { start $eea9; end $eeb0; type texttable; name "FUNCTION"; };
+range { start $eeb1; end $eeb2; type bytetable; };
+
+range { start $eebf; end $eec0; type addrtable; name "MOVE_lfa"; };
+range { start $eec1; end $eec5; type bytetable; name "MOVE_pfa"; };
+range { start $eec6; end $eec9; type texttable; name "MOVE"; };
+range { start $eeca; end $eecd; type bytetable; };
+
+range { start $eee6; end $eee7; type addrtable; name "HIMEM_lfa"; };
+range { start $eee8; end $eeec; type bytetable; name "HIMEM_pfa"; };
+range { start $eeed; end $eef1; type texttable; name "HIMEM"; };
+range { start $eef2; end $eef3; type bytetable; };
+
+range { start $eefa; end $eefb; type addrtable; name "CURSOR_lfa"; };
+range { start $eefc; end $ef00; type bytetable; name "CURSOR_pfa"; };
+range { start $ef01; end $ef06; type texttable; name "CURSOR"; };
+range { start $ef07; end $ef08; type bytetable; };
+
+range { start $ef13; end $ef14; type addrtable; name "LOUT_lfa"; };
+range { start $ef15; end $ef19; type bytetable; name "LOUT_pfa"; };
+range { start $ef1a; end $ef1d; type texttable; name "LOUT"; };
+range { start $ef1e; end $ef1f; type bytetable; };
+
+range { start $ef26; end $ef27; type addrtable; name "WAIT_lfa"; };
+range { start $ef28; end $ef2c; type bytetable; name "WAIT_pfa"; };
+range { start $ef2d; end $ef30; type texttable; name "WAIT"; };
+range { start $ef31; end $ef32; type bytetable; };
+
+range { start $ef41; end $ef42; type addrtable; name "PATTERN_lfa"; };
+range { start $ef43; end $ef47; type bytetable; name "PATTERN_pfa"; };
+range { start $ef48; end $ef4e; type texttable; name "PATTERN"; };
+range { start $ef4f; end $ef50; type bytetable; };
+
+range { start $ef58; end $ef59; type addrtable; name "DRV$_lfa"; };
+range { start $ef5a; end $ef5e; type bytetable; name "DRV$_pfa"; };
+range { start $ef5f; end $ef62; type texttable; name "DRV$"; };
+range { start $ef63; end $ef64; type bytetable; };
+
+range { start $ef78; end $ef79; type addrtable; name "EXT$_lfa"; };
+range { start $ef7a; end $ef7e; type bytetable; name "EXT$_pfa"; };
+range { start $ef7f; end $ef82; type texttable; name "EXT$"; };
+range { start $ef83; end $ef84; type bytetable; };
+
+range { start $ef91; end $ef92; type addrtable; name "EXT_lfa"; };
+range { start $ef93; end $ef97; type bytetable; name "EXT_pfa"; };
+range { start $ef98; end $ef9a; type texttable; name "EXT"; };
+range { start $ef9b; end $ef9c; type bytetable; };
+
+range { start $efb1; end $efb2; type addrtable; name "TCOPY_lfa"; };
+range { start $efb3; end $efb7; type bytetable; name "TCOPY_pfa"; };
+range { start $efb8; end $efbc; type texttable; name "TCOPY"; };
+range { start $efbd; end $efbe; type bytetable; };
+
+range { start $efc6; end $efc7; type addrtable; name "HCOPY_lfa"; };
+range { start $efc8; end $efcc; type bytetable; name "HCOPY_pfa"; };
+range { start $efcd; end $efd1; type texttable; name "HCOPY"; };
+range { start $efd2; end $efd3; type bytetable; };
+
+range { start $efda; end $efdb; type addrtable; name "AZERTY_lfa"; };
+range { start $efdc; end $efe0; type bytetable; name "AZERTY_pfa"; };
+range { start $efe1; end $efe6; type texttable; name "AZERTY"; };
+range { start $efe7; end $efe8; type bytetable; };
+
+range { start $efee; end $efef; type addrtable; name "QWERTY_lfa"; };
+range { start $eff0; end $eff4; type bytetable; name "QWERTY_pfa"; };
+range { start $eff5; end $effa; type texttable; name "QWERTY"; };
+range { start $effb; end $effc; type bytetable; };
+
+range { start $f002; end $f003; type addrtable; name "FRENCH_lfa"; };
+range { start $f004; end $f008; type bytetable; name "FRENCH_pfa"; };
+range { start $f009; end $f00e; type texttable; name "FRENCH"; };
+range { start $f00f; end $f010; type bytetable; };
+
+range { start $f016; end $f017; type addrtable; name "ACCENT_lfa"; };
+range { start $f018; end $f01c; type bytetable; name "ACCENT_pfa"; };
+range { start $f01d; end $f022; type texttable; name "ACCENT"; };
+range { start $f023; end $f024; type bytetable; };
+
+range { start $f02e; end $f02f; type addrtable; name "DELETE_lfa"; };
+range { start $f030; end $f034; type bytetable; name "DELETE_pfa"; };
+range { start $f035; end $f03a; type texttable; name "DELETE"; };
+range { start $f03b; end $f03d; type bytetable; };
+
+range { start $f044; end $f045; type addrtable; name "ASCII_lfa"; };
+range { start $f046; end $f04a; type bytetable; name "ASCII_pfa"; };
+range { start $f04b; end $f04f; type texttable; name "ASCII"; };
+range { start $f050; end $f051; type bytetable; };
+
+range { start $f086; end $f087; type addrtable; name "TALK_lfa"; };
+range { start $f088; end $f08c; type bytetable; name "TALK_pfa"; };
+range { start $f08d; end $f090; type texttable; name "TALK"; };
+range { start $f091; end $f092; type bytetable; };
+
+range { start $f09e; end $f09f; type addrtable; name "CLOCKOFF_lfa"; };
+range { start $f0a0; end $f0a4; type bytetable; name "CLOCKOFF_pfa"; };
+range { start $f0a5; end $f0ac; type texttable; name "CLOCKOFF"; };
+range { start $f0ad; end $f0ae; type bytetable; };
+
+range { start $f0b1; end $f0b2; type addrtable; name "CLOCKSET_lfa"; };
+range { start $f0b3; end $f0b7; type bytetable; name "CLOCKSET_pfa"; };
+range { start $f0b8; end $f0bf; type texttable; name "CLOCKSET"; };
+range { start $f0c0; end $f0c1; type bytetable; };
+
+range { start $f0c8; end $f0c9; type addrtable; name "SSPEED_lfa"; };
+range { start $f0ca; end $f0ce; type bytetable; name "SSPEED_pfa"; };
+range { start $f0cf; end $f0d4; type texttable; name "SSPEED"; };
+range { start $f0d5; end $f0d6; type bytetable; };
+
+label { addr $f0ff; name "Error_BADVAL"; comment "Erreur: valeur incorrecte";};
+
+range { start $f104; end $f123; type wordtable; name "SSPEED_table"; };
+range { start $f16a; end $f177; type texttable; name "SMODE_table1"; };
+range { start $f178; end $f185; type bytetable; name "SMODE_table2"; };
+range { start $f186; end $f193; type bytetable; name "SMODE_table3"; };
+
+range { start $f124; end $f125; type addrtable; name "SMODE_lfa"; };
+range { start $f126; end $f12a; type bytetable; name "SMODE_pfa"; };
+range { start $f12b; end $f12f; type texttable; name "SMODE"; };
+range { start $f130; end $f131; type bytetable; };
+
+range { start $f194; end $f195; type addrtable; name "ERRLIST_lfa"; };
+range { start $f196; end $f19a; type bytetable; name "ERRLIST_pfa"; };
+range { start $f19b; end $f1a1; type texttable; name "ERRLIST"; };
+range { start $f1a2; end $f1a3; type bytetable; };
+
+range { start $f1e0; end $f1e1; type addrtable; name "TIME_lfa"; };
+range { start $f1e2; end $f1e6; type bytetable; name "TIME_pfa"; };
+range { start $f1e7; end $f1ea; type texttable; name "TIME"; };
+range { start $f1eb; end $f1ed; type bytetable; };
+
+range { start $f20e; end $f20f; type addrtable; name "TIME$_lfa"; };
+range { start $f210; end $f214; type bytetable; name "TIME$_pfa"; };
+range { start $f215; end $f219; type texttable; name "TIME$"; };
+range { start $f21a; end $f21b; type bytetable; };
+
+range { start $f25c; end $f25d; type addrtable; name "LBUF_lfa"; };
+range { start $f25e; end $f262; type bytetable; name "LBUF_pfa"; };
+range { start $f263; end $f266; type texttable; name "LBUF"; };
+range { start $f267; end $f269; type bytetable; };
+
+range { start $f27e; end $f27f; type addrtable; name "SRBUF_lfa"; };
+range { start $f280; end $f284; type bytetable; name "SRBUF_pfa"; };
+range { start $f285; end $f289; type texttable; name "SRBUF"; };
+range { start $f28a; end $f28c; type bytetable; };
+
+range { start $f291; end $f292; type addrtable; name "SEBUF_lfa"; };
+range { start $f293; end $f297; type bytetable; name "SEBUF_pfa"; };
+range { start $f298; end $f29c; type texttable; name "SEBUF"; };
+range { start $f29d; end $f29f; type bytetable; };
+
+range { start $f2a4; end $f2a5; type addrtable; name "PLOT_lfa"; };
+range { start $f2a6; end $f2aa; type bytetable; name "PLOT_pfa"; };
+range { start $f2ab; end $f2ae; type texttable; name "PLOT"; };
+range { start $f2af; end $f2b2; type bytetable; };
+
+range { start $f2e1; end $f2e2; type addrtable; name "POP_lfa"; };
+range { start $f2e3; end $f2e7; type bytetable; name "POP_pfa"; };
+range { start $f2e8; end $f2ea; type texttable; name "POP"; };
+range { start $f2eb; end $f2ec; type bytetable; };
+
+range { start $f2f2; end $f2f3; type addrtable; name "SSAVEA_lfa"; };
+range { start $f2f4; end $f2f8; type bytetable; name "SSAVEA_pfa"; };
+range { start $f2f9; end $f2fe; type texttable; name "SSAVEA"; };
+range { start $f2ff; end $f301; type bytetable; };
+
+range { start $f309; end $f30a; type addrtable; name "SLOADA_lfa"; };
+range { start $f30b; end $f30f; type bytetable; name "SLOADA_pfa"; };
+range { start $f310; end $f315; type texttable; name "SLOADA"; };
+range { start $f316; end $f317; type bytetable; };
+
+range { start $f33b; end $f33c; type addrtable; name "SLOAD_lfa"; };
+range { start $f33d; end $f341; type bytetable; name "SLOAD_pfa"; };
+range { start $f342; end $f346; type texttable; name "SLOAD"; };
+range { start $f347; end $f348; type bytetable; };
+
+range { start $f34f; end $f350; type addrtable; name "SSAVE\"_lfa"; };
+range { start $f351; end $f355; type bytetable; name "SSAVE\"_pfa"; };
+range { start $f356; end $f35b; type texttable; name "SSAVE\""; };
+range { start $f35c; end $f35e; type bytetable; };
+
+range { start $f366; end $f367; type addrtable; name "SDUMP_lfa"; };
+range { start $f368; end $f36c; type bytetable; name "SDUMP_pfa"; };
+range { start $f36d; end $f371; type texttable; name "SDUMP"; };
+range { start $f372; end $f373; type bytetable; };
+
+range { start $f376; end $f377; type addrtable; name "CONSOLE_lfa"; };
+range { start $f378; end $f37c; type bytetable; name "CONSOLE_pfa"; };
+range { start $f37d; end $f383; type texttable; name "CONSOLE"; };
+range { start $f384; end $f385; type bytetable; };
+
+range { start $f388; end $f389; type addrtable; name "MLOADA_lfa"; };
+range { start $f38a; end $f38e; type bytetable; name "MLOADA_pfa"; };
+range { start $f38f; end $f394; type texttable; name "MLOADA"; };
+range { start $f395; end $f396; type bytetable; };
+
+range { start $f3a6; end $f3a7; type addrtable; name "MSAVEA_lfa"; };
+range { start $f3a8; end $f3ac; type bytetable; name "MSAVEA_pfa"; };
+range { start $f3ad; end $f3b2; type texttable; name "MSAVEA"; };
+range { start $f3b3; end $f3b5; type bytetable; };
+
+range { start $f3c0; end $f3c1; type addrtable; name "MLOAD_lfa"; };
+range { start $f3c2; end $f3c6; type bytetable; name "MLOAD_pfa"; };
+range { start $f3c7; end $f3cb; type texttable; name "MLOAD"; };
+range { start $f3cc; end $f3cd; type bytetable; };
+
+range { start $f3d4; end $f3d5; type addrtable; name "MSAVE\"_lfa"; };
+range { start $f3d6; end $f3da; type bytetable; name "MSAVE\"_pfa"; };
+range { start $f3db; end $f3e0; type texttable; name "MSAVE\""; };
+range { start $f3e1; end $f3e3; type bytetable; };
+
+range { start $f3ee; end $f3ef; type addrtable; name "RING_lfa"; };
+range { start $f3f0; end $f3f4; type bytetable; name "RING_pfa"; };
+range { start $f3f5; end $f3f8; type texttable; name "RING"; };
+range { start $f3f9; end $f3fa; type bytetable; };
+
+range { start $f408; end $f409; type addrtable; name "CONNECT_lfa"; };
+range { start $f40a; end $f40e; type bytetable; name "CONNECT_pfa"; };
+range { start $f40f; end $f415; type texttable; name "CONNECT"; };
+range { start $f416; end $f417; type bytetable; };
+
+range { start $f41a; end $f41b; type addrtable; name "WCXFIN_lfa"; };
+range { start $f41c; end $f420; type bytetable; name "WCXFIN_pfa"; };
+range { start $f421; end $f426; type texttable; name "WCXFIN"; };
+range { start $f427; end $f428; type bytetable; };
+
+range { start $f42b; end $f42c; type addrtable; name "UNCONNECT_lfa"; };
+range { start $f42d; end $f431; type bytetable; name "UNCONNECT_pfa"; };
+range { start $f432; end $f43a; type texttable; name "UNCONNECT"; };
+range { start $f43b; end $f43c; type bytetable; };
+
+range { start $f43f; end $f440; type addrtable; name "SOUT_lfa"; };
+range { start $f441; end $f445; type bytetable; name "SOUT_pfa"; };
+range { start $f446; end $f449; type texttable; name "SOUT"; };
+range { start $f44a; end $f44b; type bytetable; };
+
+range { start $f452; end $f453; type addrtable; name "MOUT_lfa"; };
+range { start $f454; end $f458; type bytetable; name "MOUT_pfa"; };
+range { start $f459; end $f45c; type texttable; name "MOUT"; };
+range { start $f45d; end $f45e; type bytetable; };
+
+range { start $f465; end $f466; type addrtable; name "POS_lfa"; };
+range { start $f467; end $f46b; type bytetable; name "POS_pfa"; };
+range { start $f46c; end $f46e; type texttable; name "POS"; };
+range { start $f46f; end $f470; type bytetable; };
+
+range { start $f484; end $f485; type addrtable; name "DIR_lfa"; };
+range { start $f486; end $f48a; type bytetable; name "DIR_pfa"; };
+range { start $f48b; end $f48d; type texttable; name "DIR"; };
+range { start $f48e; end $f48f; type bytetable; };
+
+range { start $f494; end $f495; type addrtable; name "DELBAK_lfa"; };
+range { start $f496; end $f49a; type bytetable; name "DELBAK_pfa"; };
+range { start $f49b; end $f4a0; type texttable; name "DELBAK"; };
+range { start $f4a1; end $f4a2; type bytetable; };
+
+range { start $f4a7; end $f4a8; type addrtable; name "DEL_lfa"; };
+range { start $f4a9; end $f4ad; type bytetable; name "DEL_pfa"; };
+range { start $f4ae; end $f4b0; type texttable; name "DEL"; };
+range { start $f4b1; end $f4b2; type bytetable; };
+
+range { start $f4b7; end $f4b8; type addrtable; name "PROT_lfa"; };
+range { start $f4b9; end $f4bd; type bytetable; name "PROT_pfa"; };
+range { start $f4be; end $f4c1; type texttable; name "PROT"; };
+range { start $f4c2; end $f4c3; type bytetable; };
+
+range { start $f4c8; end $f4c9; type addrtable; name "UNPROT_lfa"; };
+range { start $f4ca; end $f4ce; type bytetable; name "UNPROT_pfa"; };
+range { start $f4cf; end $f4d4; type texttable; name "UNPROT"; };
+range { start $f4d5; end $f4d6; type bytetable; };
+
+range { start $f4e1; end $f4e2; type addrtable; name "INIT_lfa"; };
+range { start $f4e3; end $f4e7; type bytetable; name "INIT_pfa"; };
+range { start $f4e8; end $f4eb; type texttable; name "INIT"; };
+range { start $f4ec; end $f4ed; type bytetable; };
+
+range { start $f4fb; end $f4fc; type addrtable; name "LOAD_lfa"; };
+range { start $f4fd; end $f501; type bytetable; name "LOAD_pfa"; };
+range { start $f502; end $f505; type texttable; name "LOAD"; };
+range { start $f506; end $f507; type bytetable; };
+
+range { start $f54a; end $f54b; type addrtable; name "SAVEM\"_lfa"; };
+range { start $f54c; end $f550; type bytetable; name "SAVEM\"_pfa"; };
+range { start $f551; end $f556; type texttable; name "SAVEM\""; };
+range { start $f557; end $f559; type bytetable; };
+
+range { start $f55d; end $f55e; type addrtable; name "SAVEO\"_lfa"; };
+range { start $f55f; end $f563; type bytetable; name "SAVEO\"_pfa"; };
+range { start $f564; end $f569; type texttable; name "SAVEO\""; };
+range { start $f56a; end $f56c; type bytetable; };
+
+range { start $f570; end $f571; type addrtable; name "SAVEU\"_lfa"; };
+range { start $f572; end $f576; type bytetable; name "SAVEU\"_pfa"; };
+range { start $f577; end $f57c; type texttable; name "SAVEU\""; };
+range { start $f57d; end $f57f; type bytetable; };
+
+range { start $f583; end $f584; type addrtable; name "SAVE\"_lfa"; };
+range { start $f585; end $f589; type bytetable; name "SAVE\"_pfa"; };
+range { start $f58a; end $f58e; type texttable; name "SAVE\""; };
+range { start $f58f; end $f591; type bytetable; };
+
+range { start $f663; end $f664; type addrtable; name "BACKUP_lfa"; };
+range { start $f665; end $f669; type bytetable; name "BACKUP_pfa"; };
+range { start $f66a; end $f66f; type texttable; name "BACKUP"; };
+range { start $f670; end $f671; type bytetable; };
+
+range { start $f690; end $f691; type addrtable; name "LDIR_lfa"; };
+range { start $f692; end $f696; type bytetable; name "LDIR_pfa"; };
+range { start $f697; end $f69a; type texttable; name "LDIR"; };
+range { start $f69b; end $f69c; type bytetable; };
+
+range { start $f6b1; end $f6b2; type addrtable; name "DNAME_lfa"; };
+range { start $f6b3; end $f6b7; type bytetable; name "DNAME_pfa"; };
+range { start $f6b8; end $f6bc; type texttable; name "DNAME"; };
+range { start $f6bd; end $f6be; type bytetable; };
+
+range { start $f6c4; end $f6c5; type addrtable; name "COPYO_lfa"; };
+range { start $f6c6; end $f6ca; type bytetable; name "COPYO_pfa"; };
+range { start $f6cb; end $f6cf; type texttable; name "COPYO"; };
+range { start $f6d0; end $f6d2; type bytetable; };
+
+range { start $f6d7; end $f6d8; type addrtable; name "COPYM_lfa"; };
+range { start $f6d9; end $f6dd; type bytetable; name "COPYM_pfa"; };
+range { start $f6de; end $f6e2; type texttable; name "COPYM"; };
+range { start $f6e3; end $f6e5; type bytetable; };
+
+range { start $f6ea; end $f6eb; type addrtable; name "COPY_lfa"; };
+range { start $f6ec; end $f6f0; type bytetable; name "COPY_pfa"; };
+range { start $f6f1; end $f6f4; type texttable; name "COPY"; };
+range { start $f6f5; end $f6f7; type bytetable; };
+
+range { start $f70d; end $f70e; type addrtable; name "REN_lfa"; };
+range { start $f70f; end $f713; type bytetable; name "REN_pfa"; };
+range { start $f714; end $f716; type texttable; name "REN"; };
+range { start $f717; end $f719; type bytetable; };
+
+range { start $f74f; end $f750; type addrtable; name "ESAVE_lfa"; };
+range { start $f751; end $f755; type bytetable; name "ESAVE_pfa"; };
+range { start $f756; end $f75a; type texttable; name "ESAVE"; };
+range { start $f75b; end $f75c; type bytetable; };
+
+range { start $f765; end $f766; type addrtable; name "OPEN_lfa"; };
+range { start $f767; end $f76b; type bytetable; name "OPEN_pfa"; };
+range { start $f76c; end $f76f; type texttable; name "OPEN"; };
+range { start $f770; end $f773; type bytetable; };
+
+range { start $f792; end $f793; type addrtable; name "CLOSE_lfa"; };
+range { start $f794; end $f798; type bytetable; name "CLOSE_pfa"; };
+range { start $f799; end $f79d; type texttable; name "CLOSE"; };
+range { start $f79e; end $f79f; type bytetable; };
+
+range { start $f809; end $f80a; type addrtable; name "PUT_lfa"; };
+range { start $f80b; end $f80f; type bytetable; name "PUT_pfa"; };
+range { start $f810; end $f812; type texttable; name "PUT"; };
+range { start $f813; end $f815; type bytetable; };
+
+range { start $f81a; end $f81b; type addrtable; name "TAKE_lfa"; };
+range { start $f81c; end $f820; type bytetable; name "TAKE_pfa"; };
+range { start $f821; end $f824; type texttable; name "TAKE"; };
+range { start $f825; end $f827; type bytetable; };
+
+range { start $f84b; end $f84c; type addrtable; name "JUMP_lfa"; };
+range { start $f84d; end $f851; type bytetable; name "JUMP_pfa"; };
+range { start $f852; end $f855; type texttable; name "JUMP"; };
+range { start $f856; end $f858; type bytetable; };
+
+range { start $f85d; end $f85e; type addrtable; name "APPEND_lfa"; };
+range { start $f85f; end $f863; type bytetable; name "APPEND_pfa"; };
+range { start $f864; end $f869; type texttable; name "APPEND"; };
+range { start $f86a; end $f86b; type bytetable; };
+
+range { start $f870; end $f871; type addrtable; name "REWIND_lfa"; };
+range { start $f872; end $f876; type bytetable; name "REWIND_pfa"; };
+range { start $f877; end $f87c; type texttable; name "REWIND"; };
+range { start $f87d; end $f87e; type bytetable; };
+
+range { start $f889; end $f88a; type addrtable; name "SPUT_lfa"; };
+range { start $f88b; end $f88f; type bytetable; name "SPUT_pfa"; };
+range { start $f890; end $f893; type texttable; name "SPUT"; };
+range { start $f894; end $f896; type bytetable; };
+
+range { start $f8b1; end $f8b2; type addrtable; name "STAKE_lfa"; };
+range { start $f8b3; end $f8b7; type bytetable; name "STAKE_pfa"; };
+range { start $f8b8; end $f8bc; type texttable; name "STAKE"; };
+range { start $f8bd; end $f8c0; type bytetable; };
+
+range { start $f8ee; end $f8ef; type addrtable; name "FST_lfa"; };
+range { start $f8f0; end $f8f4; type bytetable; name "FST_pfa"; };
+range { start $f8f5; end $f8f7; type texttable; name "FST"; };
+range { start $f8f8; end $f8f9; type bytetable; };
+
+range { start $f90d; end $f90e; type addrtable; name "FILE_lfa"; };
+range { start $f90f; end $f913; type bytetable; name "FILE_pfa"; };
+range { start $f914; end $f917; type texttable; name "FILE"; };
+range { start $f918; end $f919; type bytetable; };
+
+range { start $f94e; end $f94f; type addrtable; name "MERGE_lfa"; };
+range { start $f950; end $f954; type bytetable; name "MERGE_pfa"; };
+range { start $f955; end $f959; type texttable; name "MERGE"; };
+range { start $f95a; end $f95b; type bytetable; };
+
+label { addr $f9c3; name "Error_FNAME"; comment "Erreur: 'nom de fichier incorrect' ou 'lecteur absent' via $F9C0";};
+
+range { start $fa36; end $fa37; type addrtable; name "CURSET_lfa"; };
+range { start $fa38; end $fa3c; type bytetable; name "CURSET_pfa"; };
+range { start $fa3d; end $fa42; type texttable; name "CURSET"; };
+range { start $fa43; end $fa46; type bytetable; };
+
+range { start $fa4b; end $fa4c; type addrtable; name "CURMOV_lfa"; };
+range { start $fa4d; end $fa51; type bytetable; name "CURMOV_pfa"; };
+range { start $fa52; end $fa57; type texttable; name "CURMOV"; };
+range { start $fa58; end $fa5b; type bytetable; };
+
+range { start $fa60; end $fa61; type addrtable; name "DRAW_lfa"; };
+range { start $fa62; end $fa66; type bytetable; name "DRAW_pfa"; };
+range { start $fa67; end $fa6a; type texttable; name "DRAW"; };
+range { start $fa6b; end $fa6e; type bytetable; };
+
+range { start $fa76; end $fa77; type addrtable; name "ADRAW_lfa"; };
+range { start $fa78; end $fa7c; type bytetable; name "ADRAW_pfa"; };
+range { start $fa7d; end $fa81; type texttable; name "ADRAW"; };
+range { start $fa82; end $fa87; type bytetable; };
+
+range { start $fa8e; end $fa8f; type addrtable; name "CIRCLE_lfa"; };
+range { start $fa90; end $fa94; type bytetable; name "CIRCLE_pfa"; };
+range { start $fa95; end $fa9a; type texttable; name "CIRCLE"; };
+range { start $fa9b; end $fa9d; type bytetable; };
+
+range { start $faa4; end $faa5; type addrtable; name "BOX_lfa"; };
+range { start $faa6; end $faaa; type bytetable; name "BOX_pfa"; };
+range { start $faab; end $faad; type texttable; name "BOX"; };
+range { start $faae; end $fab1; type bytetable; };
+
+range { start $fab6; end $fab7; type addrtable; name "ABOX_lfa"; };
+range { start $fab8; end $fabc; type bytetable; name "ABOX_pfa"; };
+range { start $fabd; end $fac0; type texttable; name "ABOX"; };
+range { start $fac1; end $fac6; type bytetable; };
+
+range { start $facb; end $facc; type addrtable; name "PAPER_lfa"; };
+range { start $facd; end $fad1; type bytetable; name "PAPER_pfa"; };
+range { start $fad2; end $fad6; type texttable; name "PAPER"; };
+range { start $fad7; end $fad8; type bytetable; };
+
+range { start $fadc; end $fadd; type addrtable; name "INK_lfa"; };
+range { start $fade; end $fae2; type bytetable; name "INK_pfa"; };
+range { start $fae3; end $fae5; type texttable; name "INK"; };
+range { start $fae6; end $fae7; type bytetable; };
+
+range { start $fb06; end $fb07; type addrtable; name "RADIAN_lfa"; };
+range { start $fb08; end $fb0c; type bytetable; name "RADIAN_pfa"; };
+range { start $fb0d; end $fb12; type texttable; name "RADIAN"; };
+range { start $fb13; end $fb14; type bytetable; };
+
+range { start $fb1e; end $fb1f; type addrtable; name "DEGRE_lfa"; };
+range { start $fb20; end $fb24; type bytetable; name "DEGRE_pfa"; };
+range { start $fb25; end $fb29; type texttable; name "DEGRE"; };
+range { start $fb2a; end $fb2b; type bytetable; };
+
+range { start $fb35; end $fb36; type addrtable; name "CLCH_lfa"; };
+range { start $fb37; end $fb3b; type bytetable; name "CLCH_pfa"; };
+range { start $fb3c; end $fb3f; type texttable; name "CLCH"; };
+range { start $fb40; end $fb42; type bytetable; };
+
+range { start $fb69; end $fb6a; type addrtable; name "OPCH_lfa"; };
+range { start $fb6b; end $fb6f; type bytetable; name "OPCH_pfa"; };
+range { start $fb70; end $fb73; type texttable; name "OPCH"; };
+range { start $fb74; end $fb76; type bytetable; };
+
+range { start $fb90; end $fb91; type addrtable; name "CROSSX_lfa"; };
+range { start $fb92; end $fb96; type bytetable; name "CROSSX_pfa"; };
+range { start $fb97; end $fb9c; type texttable; name "CROSSX"; };
+range { start $fb9d; end $fba1; type bytetable; };
+
+range { start $fbf2; end $fbf3; type addrtable; name "CROSS_lfa"; };
+range { start $fbf4; end $fbf8; type bytetable; name "CROSS_pfa"; };
+range { start $fbf9; end $fbfd; type texttable; name "CROSS"; };
+range { start $fbfe; end $fc00; type bytetable; };
+
+range { start $fc22; end $fc23; type addrtable; name "RANDOM_lfa"; };
+range { start $fc24; end $fc28; type bytetable; name "RANDOM_pfa"; };
+range { start $fc29; end $fc2e; type texttable; name "RANDOM"; };
+range { start $fc2f; end $fc30; type bytetable; };
+
+range { start $fc47; end $fc48; type addrtable; name "WINDOW_lfa"; };
+range { start $fc49; end $fc4d; type bytetable; name "WINDOW_pfa"; };
+range { start $fc4e; end $fc53; type texttable; name "WINDOW"; };
+range { start $fc54; end $fc59; type bytetable; };
+
+range { start $fc8c; end $fc8d; type addrtable; name "PLAY_lfa"; };
+range { start $fc8e; end $fc92; type bytetable; name "PLAY_pfa"; };
+range { start $fc93; end $fc96; type texttable; name "PLAY"; };
+range { start $fc97; end $fc9b; type bytetable; };
+
+range { start $fca0; end $fca1; type addrtable; name "SOUND_lfa"; };
+range { start $fca2; end $fca6; type bytetable; name "SOUND_pfa"; };
+range { start $fca7; end $fcab; type texttable; name "SOUND"; };
+range { start $fcac; end $fcaf; type bytetable; };
+
+range { start $fcb6; end $fcb7; type addrtable; name "MUSIC_lfa"; };
+range { start $fcb8; end $fcbc; type bytetable; name "MUSIC_pfa"; };
+range { start $fcbd; end $fcc1; type texttable; name "MUSIC"; };
+range { start $fcc2; end $fcc6; type bytetable; };
+
+range { start $fcd1; end $fcd2; type addrtable; name "LORES_lfa"; };
+range { start $fcd3; end $fcd7; type bytetable; name "LORES_pfa"; };
+range { start $fcd8; end $fcdc; type texttable; name "LORES"; };
+range { start $fcdd; end $fcde; type bytetable; };
+
+range { start $fcfa; end $fcfb; type addrtable; name "LPR_lfa"; };
+range { start $fcfc; end $fd00; type bytetable; name "LPR_pfa"; };
+range { start $fd01; end $fd03; type texttable; name "LPR"; };
+range { start $fd04; end $fd05; type bytetable; };
+
+range { start $fd14; end $fd15; type addrtable; name "SEI_lfa"; };
+range { start $fd16; end $fd1a; type bytetable; name "SEI_pfa"; };
+range { start $fd1b; end $fd1d; type texttable; name "SEI"; };
+range { start $fd1e; end $fd1f; type bytetable; };
+
+range { start $fd21; end $fd22; type addrtable; name "CLI_lfa"; };
+range { start $fd23; end $fd27; type bytetable; name "CLI_pfa"; };
+range { start $fd28; end $fd2a; type texttable; name "CLI"; };
+range { start $fd2b; end $fd2c; type bytetable; };
+
+range { start $fd2e; end $fd2f; type addrtable; name "ERRNB_lfa"; };
+range { start $fd30; end $fd34; type bytetable; name "ERRNB_pfa"; };
+range { start $fd35; end $fd39; type texttable; name "ERRNB"; };
+range { start $fd3a; end $fd3b; type bytetable; };
+
+range { start $fd43; end $fd44; type addrtable; name "ERRNL_lfa"; };
+range { start $fd45; end $fd49; type bytetable; name "ERRNL_pfa"; };
+range { start $fd4a; end $fd4e; type texttable; name "ERRNL"; };
+range { start $fd4f; end $fd50; type bytetable; };
+
+range { start $fd5a; end $fd5b; type addrtable; name "ERROR_lfa"; };
+range { start $fd5c; end $fd60; type bytetable; name "ERROR_pfa"; };
+range { start $fd61; end $fd65; type texttable; name "ERROR"; };
+range { start $fd66; end $fd67; type bytetable; };
+
+range { start $fd6f; end $fd70; type addrtable; name "RESUME_lfa"; };
+range { start $fd71; end $fd75; type bytetable; name "RESUME_pfa"; };
+range { start $fd76; end $fd7b; type texttable; name "RESUME"; };
+range { start $fd7c; end $fd7d; type bytetable; };
+
+range { start $fd81; end $fd82; type addrtable; name "ERROFF_lfa"; };
+range { start $fd83; end $fd87; type bytetable; name "ERROFF_pfa"; };
+range { start $fd88; end $fd8d; type texttable; name "ERROFF"; };
+range { start $fd8e; end $fd8f; type bytetable; };
+
+range { start $fd97; end $fd98; type addrtable; name "CLEAR_lfa"; };
+range { start $fd99; end $fd9d; type bytetable; name "CLEAR_pfa"; };
+range { start $fd9e; end $fda2; type texttable; name "CLEAR"; };
+range { start $fda3; end $fda4; type bytetable; };
+
+range { start $fe09; end $fe0a; type addrtable; name "VCOPY_lfa"; };
+range { start $fe0b; end $fe0f; type bytetable; name "VCOPY_pfa"; };
+range { start $fe10; end $fe14; type texttable; name "VCOPY"; };
+range { start $fe15; end $fe16; type bytetable; };
+
+range { start $fe19; end $fe1a; type addrtable; name "DIM_lfa"; };
+range { start $fe1b; end $fe1f; type bytetable; name "DIM_pfa"; };
+range { start $fe20; end $fe22; type texttable; name "DIM"; };
+range { start $fe23; end $fe24; type bytetable; };
+
+range { start $fe25; end $fe26; type addrtable; name "FRE_lfa"; };
+range { start $fe27; end $fe2b; type bytetable; name "FRE_pfa"; };
+range { start $fe2c; end $fe2e; type texttable; name "FRE"; };
+range { start $fe2f; end $fe30; type bytetable; };
+
+range { start $fe42; end $fe43; type addrtable; name "PAGE$_lfa"; };
+range { start $fe44; end $fe48; type bytetable; name "PAGE$_pfa"; };
+range { start $fe49; end $fe4d; type texttable; name "PAGE$"; };
+range { start $fe4e; end $fe4f; type bytetable; };
+
+range { start $fe5c; end $fe5d; type addrtable; name "SERVEUR_lfa"; };
+range { start $fe5e; end $fe62; type bytetable; name "SERVEUR_pfa"; };
+range { start $fe63; end $fe69; type texttable; name "SERVEUR"; };
+range { start $fe6a; end $fe6b; type bytetable; };
+
+range { start $fe75; end $fe76; type addrtable; name "MINITEL_lfa"; };
+range { start $fe77; end $fe7b; type bytetable; name "MINITEL_pfa"; };
+range { start $fe7c; end $fe82; type texttable; name "MINITEL"; };
+range { start $fe83; end $fe84; type bytetable; };
+
+range { start $fe96; end $fe97; type addrtable; name "APLIC_lfa"; };
+range { start $fe98; end $fe9c; type bytetable; name "APLIC_pfa"; };
+range { start $fe9d; end $fea1; type texttable; name "APLIC"; };
+range { start $fea2; end $fea3; type bytetable; };
+
+range { start $febd; end $febe; type addrtable; name "TINPUT_lfa"; };
+range { start $febf; end $fec3; type bytetable; name "TINPUT_pfa"; };
+range { start $fec4; end $fec9; type texttable; name "TINPUT"; };
+range { start $feca; end $fecc; type bytetable; };
+
+range { start $ff02; end $ff03; type addrtable; name "MIDDLE$_lfa"; };
+range { start $ff04; end $ff08; type bytetable; name "MIDDLE$_pfa"; };
+range { start $ff09; end $ff0f; type texttable; name "MIDDLE$"; };
+range { start $ff10; end $ff11; type bytetable; };
+
+range { start $ff32; end $ff33; type addrtable; name "NOT_lfa"; };
+range { start $ff34; end $ff38; type bytetable; name "NOT_pfa"; };
+range { start $ff39; end $ff3b; type texttable; name "NOT"; };
+range { start $ff3c; end $ff3d; type bytetable; };
+
+range { start $ff48; end $ff49; type addrtable; name "FILL_lfa"; };
+range { start $ff4a; end $ff4e; type bytetable; name "FILL_pfa"; };
+range { start $ff4f; end $ff52; type texttable; name "FILL"; };
+range { start $ff53; end $ff56; type bytetable; };
+
+range { start $ff5e; end $ff5f; type addrtable; name "CHAR_lfa"; };
+range { start $ff60; end $ff64; type bytetable; name "CHAR_pfa"; };
+range { start $ff65; end $ff68; type texttable; name "CHAR"; };
+range { start $ff69; end $ff6c; type bytetable; };
+
+range { start $ff74; end $ff75; type addrtable; name "SCHAR_lfa"; };
+range { start $ff76; end $ff7a; type bytetable; name "SCHAR_pfa"; };
+range { start $ff7b; end $ff7f; type texttable; name "SCHAR"; };
+range { start $ff80; end $ff81; type bytetable; };
+
+range { start $ff8b; end $ff8c; type addrtable; name "CONT_lfa"; };
+range { start $ff8d; end $ff91; type bytetable; name "CONT_pfa"; };
+range { start $ff92; end $ff95; type texttable; name "CONT"; };
+range { start $ff96; end $ff97; type bytetable; };
+
+range { start $fff8; end $fff9; type addrtable; name "SIG_vector"; };
+range { start $fffa; end $fffb; type addrtable; name "NMI_vector"; };
+range { start $fffc; end $fffd; type addrtable; name "RST_vector"; };
+range { start $fffe; end $ffff; type addrtable; name "IRQ_vector"; };
