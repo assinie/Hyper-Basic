@@ -1,5 +1,5 @@
 # Hyper-Basic
-Cartouche Hyper-Basic pour Telestrat
+Cartouche Hyper-Basic V 2.0b pour Telestrat
 
 ## Historique:
 - Hyper-Basic est un Basic compilé écrit par Fabrice Broche pour le Telestrat
