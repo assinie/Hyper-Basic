@@ -24,7 +24,15 @@ label { addr $0010; size 1; name "TR4"; comment "Travail, utilisation par HyperB
 label { addr $0011; size 1; name "TR5"; comment "Travail, utilisation par HyperBasic à déterminer"; };
 label { addr $0012; size 1; name "TR6"; comment "Travail, utilisation par HyperBasic à déterminer"; };
 label { addr $0013; size 1; name "TR7"; comment "Travail, utilisation par HyperBasic à déterminer"; };
-label { addr $0014; size 1; name "DEFAFF"; comment "Caractère aà afficher par défaut lors de conversion décimale (justification)"; };
+label { addr $0014; size 1; name "DEFAFF"; comment "Caractère à afficher par défaut lors de conversion décimale (justification)"; };
+
+label { addr $004d; size 2; name "HRS1"; comment "Paramètres pour le travail sur le mode graphique"; };
+label { addr $004f; size 2; name "HRS2"; comment "Paramètres pour le travail sur le mode graphique"; };
+label { addr $0051; size 2; name "HRS3"; comment "Paramètres pour le travail sur le mode graphique"; };
+label { addr $0053; size 2; name "HRS4"; comment "Paramètres pour le travail sur le mode graphique"; };
+label { addr $0055; size 2; name "HRS5"; comment "Paramètres pour le travail sur le mode graphique"; };
+label { addr $0057; size 1; name "HRSFB"; comment "Paramètres pour le travail sur le mode graphique"; };
+
 
 label { addr $005c; size 2; name "SCEDEB"; };
 label { addr $005e; size 2; name "SCEFIN"; };
@@ -110,9 +118,14 @@ label { addr $07b7; name "errnb"; comment "Code erreur"; };
 label { addr $07b8; size 2; name "errnl"; comment "N° de la ligne contenant l'erreur ($ffff si mode direct)"; };
 label { addr $07ba; size 2; name "errgotonl"; comment "Adresse de la ligne pour le ERRGOTO"; };
 
+
+label { addr $07EA; size 3; name "telemon_call_routine"; comment "Cette addresse stocke un brk + un id de primitive telemon + rts"; };
+
 label { addr $07f1; size 1; name "save_S"; comment "Sauvegarde du registre S lors de l'appel à une appli Minitel"; };
 label { addr $07f9; size 2; name "ptr_07F9"; comment "Pointeur pour xxx"; };
 label { addr $07fb; size 2; name "HIMEM_val"; comment "Valeur de HIMEM (valeur initiale: $9800)"; };
+
+
 
 label { addr $c633; name "PrintAttentionMsg"; comment "Affiche 'Attention: '+msg erreur sur la ligne de status. Code erreur dans $CA"; };
 
