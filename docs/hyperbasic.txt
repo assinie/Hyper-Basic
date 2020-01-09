@@ -265,6 +265,12 @@ arithmétique
 		_xx: n octets???
 	_cfa: code de l'instruction
 
+_xx: $80, $83 -> compile un jmp xxx ($83 = $80+3, 3=espace pour le JMP xxx)
+_xx; $80, $03 -> ajoute les 3 octets suivant de la routine
+_xx: $8c, $00 -> ']'
+_xx: $8e, $00 -> "'"
+
+
 =========
 Table LE490:
 	00,03
