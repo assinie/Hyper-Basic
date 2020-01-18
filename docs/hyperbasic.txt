@@ -123,7 +123,123 @@ Variables du programme:
 	RTS
 
 =========
+10 GOSUB LABEL
+20 END
+30 ]LABEL
+40   PRINT "LABEL"
+50 RETURN
+
+
+        +------------------------------> Offset vers la ligne suivante (longueur de la ligne)
+        |  +---+-----------------------> N° de ligne
+        |  |   | +------------------+--> Instructions
+        |  |   | |                  |
+0800	07 0A 00 0B A2 D0 00
+0807	05 14 00 08 03
+080C	07 1E 00 00 00 D0 00
+0813	0A 28 00 13 A4 26 D0 01 24 25
+081D	05 32 00 08 01
+0822	00
+
+
+
+Variables du programme:
+        +---+------------------------------------> Adresse variable suivante
+        |   | +---+------------------------------> Type de variable
+        |   | |   | +---+------------------------> Code de la variable (correspond à ce qui est dans le programme source)
+        |   | |   | |   | +----------------------> Longueur du nom +7
+        |   | |   | |   | |  +------------+------> Nom de la variable
+        |   | |   | |   | |  |            | +---------+---> Valeur
+        |   | |   | |   | |  |            | |         |
+0823	33 08 06 00 D0 00 0C 4C 41 42 45 4C 1E 00 E4 96
+0833	3F 08 10 00 D0 01 0C 4C 41 42 45 4C
+083F	0F 00 00 00
+
+
+96D1	JSR $D507	<-- Ligne 10
+	0A 00
+	JSR $E8CB
+	JSR $96E4
+
+	JSR $D507	<-- Ligne 20
+	14 00
+	JMP $C068
+
+96E4	JSR $D507	<-- Ligne 40
+	28 00
+	JSR $E4ED
+	JSR $D368
+	33 08
+	JSR $E95F
+	JSR $E50D
+
+	JSR $D507	<-- Ligne 50
+	32 00
+	JMP $DFD5
+
+	RTS
+	23 08
+
+=========
+10 GOTO 30
+20 PRINT "20"
+30 PRINT 30
+
+0800	07 0A 00 03 A1 D0 00
+0807	0A 14 00 13 A4 25 D0 01 24 25
+0811	0A 1E 00 13 A4 26 D0 02 24 25
+081B	00
+
+Variables du programme:
+081C	29 08 07 00 D0 00 09 33 30 1E 00 EC 96
+0829	32 08 10 00 D0 01 09 32 30
+0832	3D 08 11 00 D0 02 09 33 30 1E 00
+083D	0A 00 00 00
+
+96D6	JMP $96EC
+	JSR $D507
+	14 00
+	JSR $E4ED
+	JSR $D368
+	29 08
+	JSR $E95F
+	JSR $E50D
+	JSR $D507
+	1E 00
+	JSR $E4ED
+	JSR $D368
+	32 00
+	JSR $E95F
+	JSR $E50D
+	RTS
+	1C 08
+
+=========
+
 Types variables:
+06 00: Label
+        +---+------------------------------------> Chainage vers variable suivante
+        |   | +---+------------------------------> Type de variable
+        |   | |   | +---+------------------------> Code de la variable (correspond à ce qui est dans le programme source)
+        |   | |   | |   | +----------------------> Longueur du label +7
+        |   | |   | |   | |  +------------+------> Nom du label
+        |   | |   | |   | |  |            | +---+---------> ???
+        |   | |   | |   | |  |            | |   | +---+---> Adresse de la routine
+        |   | |   | |   | |  |            | |   | |   |
+	33 08 06 00 D0 00 0C 4C 41 42 45 4C 1E 00 E4 96
+
+
+07 00: N° de ligne
+        +---+------------------------------------> Chainage vers variable suivante
+        |   | +---+------------------------------> Type de variable
+        |   | |   | +---+------------------------> Code de la variable (correspond à ce qui est dans le programme source)
+        |   | |   | |   | +----------------------> Longueur du n° de ligne en ASCII +7
+        |   | |   | |   | |  +------------+------> N° de ligne en ASCII
+        |   | |   | |   | |  |   | +---+---------> ???
+        |   | |   | |   | |  |   | |   | +---+---> Adresse de la routine
+        |   | |   | |   | |  |   | |   | |   |
+	29 08 07 00 D0 00 09 33 30 1E 00 EC 96
+
 
 08 80: Variable alpha (AB$="STRING")
         +---+---------------------------------------------------> Chainage vers variable suivante
