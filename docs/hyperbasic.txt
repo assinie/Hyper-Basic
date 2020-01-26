@@ -215,16 +215,156 @@ Variables du programme:
 	1C 08
 
 =========
+10 DIM A(5)
+20 DIM B$(5)
 
+        +---------------------------------------> Offset vers la ligne suivante (longueur de la ligne)
+        |  +---+--------------------------------> N° de ligne
+        |  |   | +---------------------------+--> Instructions
+        |  |   | |                           |
+0800	0D 0A 00 00 C0 CC D0 00 2D D0 01 2E 3D
+080D	0D 14 00 00 C0 CC D0 02 2D D0 01 2E 3D
+081A	00
+
+
+        +---+------------------------------------> Adresse variable suivante
+        |   | +---+------------------------------> Type de variable
+        |   | |   | +---+------------------------> Code de la variable (correspond à ce qui est dans le programme source)
+        |   | |   | |   | +----------------------> Longueur du nom +7
+        |   | |   | |   | |  +-------------------> Nom de la variable
+        |   | |   | |   | |  |  +-------+---> Valeur
+        |   | |   | |   | |  |  |       |
+081B	25 08 0D 00 D0 00 08 41 00 00
+0825	2F 08 11 00 D0 01 08 35 05 00
+082F	3A 08 0C 00 D0 02 09 42 24 00 00
+083A	0D 00 00 00 D0 03
+
+=========
+10 A=B(0)
+20 B(1)=A
+
+
+        +---------------------------------------> Offset vers la ligne suivante (longueur de la ligne)
+        |  +---+--------------------------------> N° de ligne
+        |  |   | +---------------------------+--> Instructions
+        |  |   | |                           |
+0800	0F 0A 00 1A AA D0 00 2C D0 01 2D D0 02 E2 3D
+080F	0F 14 00 1A AA D0 01 2D D0 03 2E 3D 2C D0 00
+081E	00
+
+
+        +---+------------------------------------> Adresse variable suivante
+        |   | +---+------------------------------> Type de variable
+        |   | |   | +---+------------------------> Code de la variable (correspond à ce qui est dans le programme source)
+        |   | |   | |   | +----------------------> Longueur du nom +7
+        |   | |   | |   | |  +-------------------> Nom de la variable
+        |   | |   | |   | |  |  +-------+---> Valeur
+        |   | |   | |   | |  |  |       |
+081F	2C 08 09 40 D0 00 08 41 00 00 00 00 00
+082C	6D 08 0D 40 D0 01 08 42 0B 00 00 00 00
+...	00 ...
+086D	77 08 11 00 D0 02 08 30 00 00
+0877	81 08 11 00 D0 03 08 31 01 00
+0881	46 00 00 00
+
+96CB	JSR $D507	<-- Ligne 10
+	0A 00
+
+	JSR $D268
+	1F 08		<-- A
+
+	JSR $D05F
+	2C 08		<-- B()
+
+	JSR $D368
+	6D 08		<-- 0
+
+	JSR $D086	<-- Récupère la valeur de B(0)
+
+	JSR $D28F	<-- = (Affectation)
+
+
+	JSR $D507	<-- Ligne 20
+	14 00
+
+	JSR $D05F
+	2C 08		<-- B()
+
+	JSR $D368
+	77 08		<-- 1
+	JSR $D088	<-- Récupère l'adresse de B(1)
+
+	JSR $D368
+	1F 08		<-- A
+	JSR $D28F	<-- = (Affectation)
+
+	RTS
+	1F 08
+
+=========
+10 A=1
+20 B(A)=C
+
+        +---------------------------------------> Offset vers la ligne suivante (longueur de la ligne)
+        |  +---+--------------------------------> N° de ligne
+        |  |   | +---------------------------+--> Instructions
+        |  |   | |                           |
+0800	0A 0A 00 12 AA D0 00 2C D0 01
+080A	0F 14 00 1A AA D0 02 2D D0 00 2E 3D 2C D0 03
+0819	00
+
+        +---+------------------------------------> Adresse variable suivante
+        |   | +---+------------------------------> Type de variable
+        |   | |   | +---+------------------------> Code de la variable (correspond à ce qui est dans le programme source)
+        |   | |   | |   | +----------------------> Longueur du nom +7
+        |   | |   | |   | |  +-------------------> Nom de la variable
+        |   | |   | |   | |  |  +------------+---> Valeur
+        |   | |   | |   | |  |  |            |
+081A	27 08 09 00 D0 00 04 41 00 00 00 00 00
+0827	31 08 11 00 D0 01 08 31 01 00
+0831	72 08 0D 03 D0 02 08 42 0B 00 00 00 00
+...	00 ...
+0872	7F 08 09 00 D0 03 08 43 00 00 00 00 00
+087F	46 00 00 00
+
+
+96D3	JSR $D507	<-- Ligne 10
+	0A 00
+
+	JSR $D268	<-- Récupère l'adresse de...
+	1A 08		<-- A
+
+	JSR $D368	<-- Récupère la valeur de...
+	27 08		<-- 1
+
+	JSR $D28F	<-- = (Affectation)
+
+
+	JSR $D507	<-- Ligne 20
+	14 00
+
+	JSR $D05F	<- Récupère l'adresse de...
+	31 08		<-- B()
+	JSR $D368	<-- Récupère la valeur de..
+	1A 08		<-- A
+	JSR $D088	<-- Récupère l'adresse de B(A)
+
+	JSR $D368	<-- Récupère la valeur de...
+	72 08		<-- C
+	JSR $D28F	<-- = (Affectation)
+	RTS
+	1A 08
+
+=========
 Types variables:
 06 00: Label
         +---+------------------------------------> Chainage vers variable suivante
-        |   | +---+------------------------------> Type de variable
+        |   | +---+------------------------------> Type de variable (2nd octet à 3 si non défini)
         |   | |   | +---+------------------------> Code de la variable (correspond à ce qui est dans le programme source)
         |   | |   | |   | +----------------------> Longueur du label +7
         |   | |   | |   | |  +------------+------> Nom du label
-        |   | |   | |   | |  |            | +---+---------> ???
-        |   | |   | |   | |  |            | |   | +---+---> Adresse de la routine
+        |   | |   | |   | |  |            | +---+---------> N° de ligne en binare (00 00 si non défini)
+        |   | |   | |   | |  |            | |   | +---+---> Adresse de la routine (00 00 si non défini)
         |   | |   | |   | |  |            | |   | |   |
 	33 08 06 00 D0 00 0C 4C 41 42 45 4C 1E 00 E4 96
 
@@ -235,7 +375,7 @@ Types variables:
         |   | |   | +---+------------------------> Code de la variable (correspond à ce qui est dans le programme source)
         |   | |   | |   | +----------------------> Longueur du n° de ligne en ASCII +7
         |   | |   | |   | |  +------------+------> N° de ligne en ASCII
-        |   | |   | |   | |  |   | +---+---------> ???
+        |   | |   | |   | |  |   | +---+---------> N° de ligne en binaire
         |   | |   | |   | |  |   | |   | +---+---> Adresse de la routine
         |   | |   | |   | |  |   | |   | |   |
 	29 08 07 00 D0 00 09 33 30 1E 00 EC 96
@@ -325,9 +465,9 @@ Types variables:
 	20 08 12 00 D0 01 0C 36 35 35 33 36 91 00 00 00 00
 
 
-0C 03: Tableau alpha dimensionné
+0C 03: Tableau alpha non dimensionné
 
-0C 80: Tableau alpha non dimensionné (on a fait AB$(0)="STRING" sans avoir fait un DIM préalable par exemple, dimensionnement par défaut utilisé)
+0C 80: Tableau alpha dimensionné (on a fait AB$(0)="STRING" sans avoir fait un DIM préalable par exemple, dimensionnement par défaut utilisé)
         +---+---------------------------------------------------> Chainage vers variable suivante
         |   | +---+---------------------------------------------> Type
         |   | |   | +---+---------------------------------------> Code de la variable
@@ -338,7 +478,7 @@ Types variables:
         |   | |   | |   | |  |      | |   | |      |
 	2E 08 0C 80 D0 00 0A 41 42 24 0B 00 06 4A 08
 
-	Les chaines du tableau sont staockées comme des constantes alpha ("STRING") mais dans le tableau on pointe directement sur le début de la chaine:
+	Les chaines du tableau sont stockées comme des constantes alpha ("STRING") mais dans le tableau on pointe directement sur le début de la chaine:
               +---+---------------------------------------------------> Chainage vers variable suivante
               |   | +---+---------------------------------------------> Type
               |   | |   | +---+---------------------------------------> Code de la variable
@@ -348,9 +488,9 @@ Types variables:
 	0843: 50 08 10 00 D0 03 0D 53 54 52 49 4E 47
 
 
-0D 03: Tableau numérique dimensionné (dimension minimale 10 même si on a fait DIM AB(5))
+0D 03: Tableau numérique non dimensionné (dimension minimale 10 même si on a fait DIM AB(5))
 
-0D 00: Tableau numérique non dimensionné (dimension par défaut 10)
+0D 00: Tableau numérique dimensionné (dimension par défaut 10)
         +---+---------------------------------------------------> Chainage vers variable suivante
         |   | +---+---------------------------------------------> Type
         |   | |   | +---+---------------------------------------> Code de la variable
@@ -425,9 +565,9 @@ Table LE411:
 21:        jsr     LD28F                           ; E432 20 8F D2
 24:        jsr     LF641                           ; E435 20 41 F6
 27:        jsr     LF5E6                           ; E438 20 E6 F5
-2A:        jsr     LF5FE                           ; E43B 20 FE F5
-2D:        jsr     LF60A                           ; E43E 20 0A F6
-30:        jsr     LF619                           ; E441 20 19 F6
+2A:        jsr     Get_DESALO                      ; E43B 20 FE F5
+2D:        jsr     Get_FISALO                      ; E43E 20 0A F6
+30:        jsr     Get_EXSALO                      ; E441 20 19 F6
 33:        jsr     LF997                           ; E444 20 97 F9
 36:        jsr     LE046                           ; E447 20 46 E0
 39:        jsr     LEAF4                           ; E44A 20 F4 EA
@@ -437,6 +577,7 @@ Table LE411:
 45:        jsr     LE517                           ; E456 20 17 E5
 48:        jsr     LE51C                           ; E459 20 1C E5
 4B:        jsr     LD4D7                           ; E45C 20 D7 D4
+
 4E:        lda     #$00                            ; E45F A9 00
 50:        sta     FACC1E                          ; E461 85 60
 52:        lda     #$11                            ; E463 A9 11
@@ -477,10 +618,10 @@ Table LC69C:
         .word   LC7ED-1                         ; C6B6 EC C7
         .word   LC915-1                         ; C6B8 14 C9
         .word   LC939-1                         ; C6BA 38 C9
-        .word   LC98E-1                         ; C6BC 8D C9
+        .word   LC98E-1                         ; "SET"/"OFF"
         .word   LC9A4-1                         ; "TO"
         .word   LC9AE-1                         ; "STEP"
-        .word   LC9B8-1                         ; C6C2 B7 C9
+        .word   LC9B8-1                         ; "ELSE"
         .word   LC9C7-1                         ; "THEN"
         .word   LC7BB-1                         ; C6C6 BA C7
         .word   LC703-1                         ; C6C8 02 C7
@@ -571,4 +712,39 @@ Table 4:
 3  
 4  (ligne
 5 HYPER BASIC V2.0bGOSUBparametre(c) 1986 ORIC International
+
+
+=========
+AtnMsg_table
+        $00: $01 -> plus de parametre
+        $01: $03 -> expression numerique
+        $02: $04 -> expression alphanumerique
+        $03: $00 -> Attention
+        $04: $07 -> expression
+        $05: $0C -> variable alphanumerique
+        $06: $0D -> variable numerique
+        $07: $0E -> variable
+
+        $08: $0F -> "=" ?
+        $09: $0A -> "," ?
+        $0A: $08 -> "(" ?
+        $0B: $09 -> ")" ?
+        $0C: $06 -> label
+        $0D: $05 -> No de ligne ou label
+        $0E: $00 -> Attention
+        $0F: $00 -> Attention
+
+        $10: $02 -> SET ou OFF
+        $11: $10 -> "TO" ?
+        $12: $17 -> "STEP" ?
+        $13: $12 -> "ELSE" ?
+        $14: $11 -> "THEN" ?
+        $15: $15 -> 2eme "'" ?
+        $16: $00 -> Attention
+        $17: $00 -> Attention
+
+        $18: $0B -> nombre trop grand
+        $19: $02 -> SET ou OFF
+        $1A: $16 -> ?
+        $1B: $14 -> caractere
 

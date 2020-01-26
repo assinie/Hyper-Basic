@@ -28,6 +28,8 @@ HRS3            := $0051                        ; Paramètres pour le travail su
 HRS4            := $0053                        ; Paramètres pour le travail sur le mode graphique
 HRS5            := $0055                        ; Paramètres pour le travail sur le mode graphique
 HRSFB           := $0057                        ; Paramètres pour le travail sur le mode graphique
+RS232T          := $0059                        ; Paramétrage RS232 (vitesse, nb de bits, nb stop)
+RS232C          := $005A                        ; Paramétrage RS232 (echo, parité)
 SCEDEB          := $005C
 SCEFIN          := $005E
 FACC1E          := $0060
@@ -45,6 +47,7 @@ fTalk           := $008D                        ; Flag TALK, b7: 0->SET, 1->OFF
 TRACEPTR        := $0099                        ; Pointeur mis à jour par Traceline, pointe vers le début du code d'une ligne compilée
                                                 ; utilisé par TRACE/Error_X
                                                 ; contient le n° de ligne en cours de compilation pendant la compilation (affiché si TALK SET)
+;               := $009B                        ; Périphérique par défaut pour L07EA? ($00-> [canal 0], $01-> [canal 0], $40->XMDS [canal 2] , $80->XRSS [canal 2] , $C0->XLPR [canal 2])
 VARTYP          := $00BA                        ; Type d'une variable/constante:
                                                 ;       $00->variable/constante numérique (non flottant)
                                                 ;       $40->variable/constante numérique (flottant)
@@ -53,6 +56,9 @@ ptr00BE         := $00BE                        ; Pointeur pour xxx
 ptr00C0         := $00C0                        ; Pointeur pour xxx
 
 TXTPTR          := $00C4                        ; Pointeur pour BUFEDT
+;               := $00C5                        ; Pointeur pour L0600
+
+ATTNERR         := $00CA                        ; Index dans la table AtnMsg_table (Cf. PrintAttentionMsg)
 
 BUFTRV          := $0100                        ; Buffer travail numérique et alpha (16 octets)
 
@@ -113,6 +119,8 @@ XFIELD          := $054C                        ; Pour fichier accès direct: xf
 EXTDEF          := $055D                        ; Extension par défaut
 BUFEDT          := $0590                        ; Buffer Editeur de Texte
 
+L0600           := $0600                        ; Tampon temporaire (utilisé pendant la compilation d'une instruction)
+
 SP              := $0700                        ; Pointeur de la pile
 Stack           := $0701                        ; Pile pour xxx
 errnb           := $07B7                        ; Code erreur
@@ -125,21 +133,33 @@ L07ED           := $07ED                        ; BRK fct RTS (utilisé pour les
 savem_S         := $07F1                        ; Sauvegarde du registre S lors de l'appel à une appli Minitel
 ptr_07F5        := $07F5                        ; Pointeur pour ???
 ptr_07F7        := $07F7                        ; Pointeur pour ???
-ptr_07F9        := $07F9                        ; Pointeur pour les chaines?
+PGMSTART        := $07F9                        ; Adresse de début du programme compilé
 HIMEM_val       := $07FB                        ; Valeur de HIMEM (valeur initiale: $9800)
-L07FD           := $07FD                        ; Adresse de début des variables
+VARBOT          := $07FD                        ; Adresse de début des variables
 
 L2710           := $2710                        ; Dummy adresse modifiée lors de la compilation du programme Basic (trouvée dans WHILE et UNCOUNT)
 
 ; ----------------------------------------------------------------------------
+#define I_BRK $00
 #define I_CLC $18
 #define I_JSR $20
 #define I_SEC $38
 #define I_JMP $4C
 #define I_RTS $60
 #define I_NOP $EA
+
 ; ----------------------------------------------------------------------------
-LC000:
+#define XSC3 $8B
+#define XLPR $8E
+#define XMDS $8F
+#define XRSS $90
+
+; ----------------------------------------------------------------------------
+; Adresse de début d'un programme source
+#define L07F0 $07F0
+
+; ----------------------------------------------------------------------------
+ColdStart:
         jmp     LFFAC                           ; C000 4C AC FF
 
 ; ----------------------------------------------------------------------------
@@ -160,7 +180,7 @@ LC005:
         sta     $029F                           ; C01C 8D 9F 02
 
         ; Place un RTS
-        lda     #$60                            ; C01F A9 60
+        lda     #I_RTS                          ; C01F A9 60
         sta     L07ED+2                         ; C021 8D EF 07
         sta     L07EA+2                         ; C024 8D EC 07
 
@@ -184,14 +204,14 @@ LC005:
         sta     vaplic                          ; C044 8D FD 02
 
         ; VNMI := $C068
-        lda     #$68                            ; C047 A9 68
-        ldy     #$C0                            ; C049 A0 C0
+        lda     #<LC068                         ; C047 A9 68
+        ldy     #>LC068                         ; C049 A0 C0
         sta     vnmi+1                          ; C04B 8D F5 02
         sty     vnmi+2                          ; C04E 8C F6 02
 
-        ; VAPLIC := $FE8A
-        lda     #$8A                            ; C051 A9 8A
-        ldy     #$FE                            ; C053 A0 FE
+        ; VAPLIC := LFE8A
+        lda     #<LFE8A                         ; C051 A9 8A
+        ldy     #>LFE8A                         ; C053 A0 FE
         sta     vaplic+1                        ; C055 8D FE 02
         sty     vaplic+2                        ; C058 8C FF 02
 
@@ -213,6 +233,7 @@ LC068:
 LC06D:
         ; Déplacement de 6 caractères à droite
         ldx     #$06                            ; C06D A2 06
+
 LC06F:
         lda     #$01                            ; C06F A9 01
         sta     $9B                             ; C071 85 9B
@@ -237,9 +258,11 @@ LC06F:
         sty     $8E                             ; C083 84 8E
         sta     $8F                             ; C085 85 8F
 
+        ; Force b1=1
         lda     fFlags                          ; C087 A5 8C
-        ora     #$02                            ; C089 09 02
+        ora     #%00000010                      ; C089 09 02
         sta     fFlags                          ; C08B 85 8C
+
         jsr     LC4DE                           ; C08D 20 DE C4
 
         ; Sauvegarde X sur la pile 6502
@@ -308,9 +331,11 @@ LC0CF:
         pla                                     ; C0CF 68
         bne     LC112                           ; C0D0 D0 40
 
+        ; Valeur compteurs clavier (répétition)
         lda     #$03                            ; C0D2 A9 03
         sta     $02A8                           ; C0D4 8D A8 02
         sta     $02A6                           ; C0D7 8D A6 02
+
         ldy     #$00                            ; C0DA A0 00
         lda     (TR0),y                         ; C0DC B1 0C
         beq     LC14B                           ; C0DE F0 6B
@@ -327,14 +352,16 @@ LC0CF:
 
         ; Restaure RES-RES+1 depuis $00AE-00AF
         jsr     LC4A6                           ; C0EC 20 A6 C4
-
         bcs     LC14E                           ; C0EF B0 5D
+
         tya                                     ; C0F1 98
         tax                                     ; C0F2 AA
         jsr     LDA03                           ; C0F3 20 03 DA
+
         ; Affiche le curseur de la fenêtre 0
         ldx     #$00                            ; C0F6 A2 00
        _XCSSCR                                  ; C0F8 00 35
+
         ; Ecrit le prompt
        _XECRPR                                  ; C0FA 00 33
 
@@ -347,6 +374,7 @@ LC0FF:
         sbc     SCRDX                           ; C103 ED 28 02
         cmp     #$02                            ; C106 C9 02
         bcc     LC10C                           ; C108 90 02
+
        _XCRLF                                   ; C10A 00 25
 LC10C:
         jmp     LC068                           ; C10C 4C 68 C0
@@ -398,15 +426,15 @@ LC133:
         ; différence dans AY et TR3-TR4
 
 LC136:
-        ; Ajoute AY à (L07FD-L07FE)
+        ; Ajoute AY à (VARBOT)
         ; Résultat aussi dans XA
         clc                                     ; C136 18
-        adc     L07FD                           ; C137 6D FD 07
-        sta     L07FD                           ; C13A 8D FD 07
+        adc     VARBOT                          ; C137 6D FD 07
+        sta     VARBOT                          ; C13A 8D FD 07
         tax                                     ; C13D AA
         tya                                     ; C13E 98
-        adc     L07FD+1                         ; C13F 6D FE 07
-        sta     L07FD+1                         ; C142 8D FE 07
+        adc     VARBOT+1                        ; C13F 6D FE 07
+        sta     VARBOT+1                        ; C142 8D FE 07
 
         ; Mise à jour des liens (fin lorsque le poids fort d'un lien = 0)
         ; Adresse premier lien dans XA, déplacement dans TR3-TR4
@@ -512,12 +540,17 @@ LC1BE:
         beq     LC1CC                           ; C1C6 F0 04
         lda     $9E                             ; C1C8 A5 9E
         ldy     $9F                             ; C1CA A4 9F
+
 LC1CC:
+        ; Recherche les adresses d'exécution et source de la ligne (AY) du programme
         jsr     LD0ED                           ; C1CC 20 ED D0
+
+        ; Copie l'adresse de la ligne source dans RESB
         lda     ptr00C0                         ; C1CF A5 C0
         ldy     ptr00C0+1                       ; C1D1 A4 C1
         sta     RESB                            ; C1D3 85 02
         sty     RESB+1                          ; C1D5 84 03
+
         lda     #$FE                            ; C1D7 A9 FE
         ldy     #$FF                            ; C1D9 A0 FF
         ldx     $C9                             ; C1DB A6 C9
@@ -531,6 +564,7 @@ LC1E5:
         bcc     LC1EB                           ; C1E8 90 01
         iny                                     ; C1EA C8
 LC1EB:
+        ; Recherche les adresses d'exécution et source de la ligne (AY) du programme
         jsr     LD0ED                           ; C1EB 20 ED D0
         lda     #$02                            ; C1EE A9 02
         sta     $98                             ; C1F0 85 98
@@ -816,7 +850,7 @@ LC355:
         jmp     LC286                           ; C355 4C 86 C2
 
 ; ----------------------------------------------------------------------------
-; Converti ACC suivant la table LE468
+; Converti ACC-$20 suivant la table LE468
 LC358:
         sec                                     ; C358 38
         sbc     #$20                            ; C359 E9 20
@@ -875,8 +909,8 @@ LC384:
 
         ; $07FD := $0801
         lda     #$01                            ; C392 A9 01
-        sta     L07FD                           ; C394 8D FD 07
-        sty     L07FD+1                         ; C397 8C FE 07
+        sta     VARBOT                          ; C394 8D FD 07
+        sty     VARBOT+1                        ; C397 8C FE 07
 
         ; Initialise $0800->$0807 avec des $00
         lda     #$00                            ; C39A A9 00
@@ -994,10 +1028,15 @@ LC3F4:
 
         tya                                     ; C40F 98
         pha                                     ; C410 48
+
+        ; Force b7=1 pour le second octet du type
+        ; de la variable.
+        ; (ie: marque le tableau comme dimensioné)
         ldy     #$03                            ; C411 A0 03
         lda     ($92),y                         ; C413 B1 92
         ora     #$80                            ; C415 09 80
         sta     ($92),y                         ; C417 91 92
+
         pla                                     ; C419 68
         tay                                     ; C41A A8
         bpl     LC3F4                           ; C41B 10 D7
@@ -1016,23 +1055,32 @@ LC41D:
 
 
 LC42C:
-        ldx     L07FD                           ; C42C AE FD 07
-        lda     L07FD+1                         ; C42F AD FE 07
+        ; Adresse de début de la table des variables...
+        ldx     VARBOT                          ; C42C AE FD 07
+        lda     VARBOT+1                        ; C42F AD FE 07
+
 LC432:
+        ; dans $92-93
         stx     $92                             ; C432 86 92
         sta     $93                             ; C434 85 93
 
 LC436:
+        ; Fin de la table atteinte?
         ldy     #$01                            ; C436 A0 01
         lda     ($92),y                         ; C438 B1 92
         beq     LC48D                           ; C43A F0 51
 
+        ; Variable alpha ou tableau alpha non dimensioné?
         ldy     #$03                            ; C43C A0 03
         lda     ($92),y                         ; C43E B1 92
         bpl     LC450                           ; C440 10 0E
 
+        ; Oui
         and     #$7F                            ; C442 29 7F
         sta     ($92),y                         ; C444 91 92
+
+        ; Chainage vers la variable suivante
+        ; et boucle si on n'est pas à la fin de la table
         ldy     #$00                            ; C446 A0 00
         lda     ($92),y                         ; C448 B1 92
         tax                                     ; C44A AA
@@ -1162,11 +1210,14 @@ LC4DE:
 LC4E7:
         ; Sauvegarde X en $C4
         stx     TXTPTR                          ; C4E7 86 C4
-        ; $B0 / 2
+
+        ; Force b7 de $B0 à 0
         lsr     $B0                             ; C4E9 46 B0
+
         ; $C2 := #$05
         ldy     #$05                            ; C4EB A0 05
         sty     $C2                             ; C4ED 84 C2
+
         ; $C5 := #$01
         ldy     #$01                            ; C4EF A0 01
         sty     $C5                             ; C4F1 84 C5
@@ -1182,6 +1233,7 @@ LC4E7:
 LC4FA:
         ; Restaure X
         ldx     TXTPTR                          ; C4FA A6 C4
+
         ; Caractère courant = "?"
         lda     BUFEDT,x                        ; C4FC BD 90 05
         cmp     #"?"                            ; C4FF C9 3F
@@ -1197,6 +1249,7 @@ LC4FA:
         ldy     #>PRINT_lfa                     ; C50A A0 E8
         bne     LC560                           ; C50C D0 52
 
+; ----------------------------------------------------------------------------
 LC50E:
         ; Cherche une instruction de type 1 (Commande)
         ldx     #$01                            ; C50E A2 01
@@ -1224,7 +1277,7 @@ LC517:
 
 ; Traitement affectation
 LC527:
-        ; Compile ACC,#$FF en $600,$C5 et ajuste $C5 (ACC est inchangé)
+        ; Compile ACC,#$FF en L0600,$C5 et ajuste $C5 (ACC est inchangé)
         lda     #$AA                            ; C527 A9 AA
         jsr     LCA7A                           ; C529 20 7A CA
 
@@ -1274,7 +1327,9 @@ LC55C:
         ldy     $93                             ; C55E A4 93
 
 LC560:
-        ; Calcule la taille du LM de l'instruction à compiler
+        ; Compile le token de l'instruction dans L0600,$C5 et
+        ; calcule la taille du LM de l'instruction à compiler
+        ; (ajuste $C2, $C4, $C5)
         jsr     LCE02                           ; C560 20 02 CE
 
         ; TR0-TR1 := pointeur sur la définition de l'instruction à compiler
@@ -1316,7 +1371,7 @@ LC57A:
         bpl     LC59A                           ; C588 10 10
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         txa                                     ; C58A 8A
         and     #$3F                            ; C58B 29 3F
         jsr     LCA69                           ; C58D 20 69 CA
@@ -1355,6 +1410,7 @@ LC5B1:
         bcc     LC57A                           ; C5B3 90 C5
 
 
+; ----------------------------------------------------------------------------
 ; Traitement pour les instructions dont le premier octet suivant le nom est #$80
 LC5B5:
         ; Saute les espaces jusqu'au prochain caractère dans BUFEDT
@@ -1368,7 +1424,7 @@ LC5B5:
         jsr     LC686                           ; C5BC 20 86 C6
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$20                            ; C5BF A9 20
         jsr     LCA69                           ; C5C1 20 69 CA
 
@@ -1387,8 +1443,11 @@ LC5C7:
 
         ; Oui
         jsr     LC90C                           ; C5CF 20 0C C9
+
+        ; Force b7 de $B0 à 1
         sec                                     ; C5D2 38
         ror     $B0                             ; C5D3 66 B0
+
         jsr     LCCCC                           ; C5D5 20 CC CC
         bcs     LC5FD                           ; C5D8 B0 23
 
@@ -1399,7 +1458,7 @@ LC5DA:
         tax                                     ; C5DD AA
         beq     LC603                           ; C5DE F0 23
 
-        cmp     #$27                            ; C5E0 C9 27
+        cmp     #"'"                            ; C5E0 C9 27
         beq     LC600                           ; C5E2 F0 1C
 
         ; Appel à la routine n°X de la table LC69C (sortie de la routine avec C=1 si erreur)
@@ -1417,6 +1476,7 @@ LC5DA:
 LC5F4:
         bcs     PrintAttentionMsg               ; C5F4 B0 3D
 
+        ; Force b7 de $B0 à 0
         lsr     $B0                             ; C5F6 46 B0
         jsr     LCCCC                           ; C5F8 20 CC CC
         bcc     LC5DA                           ; C5FB 90 DD
@@ -1431,12 +1491,16 @@ LC600:
 LC603:
         jsr     LCAEE                           ; C603 20 EE CA
 
-        lda     #$00                            ; C606 A9 00
-        ldy     #$06                            ; C608 A0 06
+        lda     #<L0600                         ; C606 A9 00
+        ldy     #>L0600                         ; C608 A0 06
         sta     TR0                             ; C60A 85 0C
         sty     TR1                             ; C60C 84 0D
-        lda     $0601                           ; C60E AD 01 06
-        ldx     $0602                           ; C611 AE 02 06
+
+        ; Tokens de l'nstruction en cours de traitement
+        lda     L0600+1                         ; C60E AD 01 06
+        ldx     L0600+2                         ; C611 AE 02 06
+
+        ; Si DIM ($C0 $CC) -> LC627
         cpx     #$CC                            ; C614 E0 CC
         bne     LC61C                           ; C616 D0 04
 
@@ -1444,40 +1508,56 @@ LC603:
         beq     LC627                           ; C61A F0 0B
 
 LC61C:
-        ; Test de ACC -> Z=0 si ACC € [$00, $09, $0F, $10, $05, $A0, $A1, $A3]
+        ; Test de ACC -> Z=1 si ACC € [$00, $09, $0F, $10, $05, $A0, $A1, $A3]
         jsr     LDF9A                           ; C61C 20 9A DF
         bne     LC62A                           ; C61F D0 09
 
+        ; Instruction ne générant pas de code
+        ; on soustrait 5 de ($C2)
         sec                                     ; C621 38
         lda     $C2                             ; C622 A5 C2
         sbc     #$05                            ; C624 E9 05
         .byte   $2C                             ; C626 2C
+
 LC627:
+        ; Instruction DIM: $C2 <- 0
         lda     #$00                            ; C627 A9 00
         .byte   $2C                             ; C629 2C
+
 LC62A:
         lda     $C2                             ; C62A A5 C2
-        sta     $0600                           ; C62C 8D 00 06
+
+        ; Place la valeur de ACC dans L0600
+        sta     L0600                           ; C62C 8D 00 06
+        ; Y = ($C5)
         ldy     $C5                             ; C62F A4 C5
+
         clc                                     ; C631 18
         rts                                     ; C632 60
 
 ; ----------------------------------------------------------------------------
 ; Affiche 'Attention: '+msg erreur sur la ligne de status. Code erreur dans $CA
 PrintAttentionMsg:
+        ; HIRES mode? -> LC654
         bit     FLGTEL                          ; C633 2C 0D 02
         bmi     LC654                           ; C636 30 1C
+
+        ; Sauvegarde l'emplacement du curseur
         lda     SCRX                            ; C638 AD 20 02
         pha                                     ; C63B 48
         lda     SCRY                            ; C63C AD 24 02
         pha                                     ; C63F 48
+
+        ; 'Attention:'
         ldx     #$00                            ; C640 A2 00
         jsr     PrintErrMsg2                    ; C642 20 81 D5
-        ldy     $CA                             ; C645 A4 CA
+
+        ; Affiche le message
+        ldy     ATTNERR                         ; C645 A4 CA
         ldx     AtnMsg_table,y                  ; C647 BE CA C6
         jsr     PrintErrMsg2                    ; C64A 20 81 D5
 
-        ; Place le curseur en X,Y
+        ; Remet le curseur à sa place
         pla                                     ; C64D 68
         tay                                     ; C64E A8
         pla                                     ; C64F 68
@@ -1521,7 +1601,8 @@ LC674:
 LC676:
         txa                                     ; C676 8A
         and     #$1F                            ; C677 29 1F
-        sta     $CA                             ; C679 85 CA
+        sta     ATTNERR                         ; C679 85 CA
+
         asl     a                               ; C67B 0A
         tax                                     ; C67C AA
         lda     LC69C+1,x                       ; C67D BD 9D C6
@@ -1561,10 +1642,10 @@ LC69C:
         .word   LC747-1                         ; C6A6 46 C7
         .word   LC76C-1                         ; C6A8 6B C7
         .word   LC7A9-1                         ; C6AA A8 C7
-        .word   LC7C0-1                         ; C6AC BF C7
-        .word   LC7C7-1                         ; C6AE C6 C7
-        .word   LC7CE-1                         ; C6B0 CD C7
-        .word   LC7D5-1                         ; C6B2 D4 C7
+        .word   Expect_EQ-1                     ; C6AC BF C7
+        .word   Expect_COMMA-1                  ; C6AE C6 C7
+        .word   Expect_LPAREN-1                 ; C6B0 CD C7
+        .word   Expect_RPAREN-1                 ; C6B2 D4 C7
         .word   LC7E7-1                         ; C6B4 E6 C7
         .word   LC7ED-1                         ; C6B6 EC C7
         .word   LC915-1                         ; C6B8 14 C9
@@ -1574,9 +1655,10 @@ LC69C:
         .word   Expect_STEP-1                   ; C6C0 AD C9
         .word   Expect_ELSE-1                   ; C6C2 B7 C9
         .word   Expect_THEN-1                   ; C6C4 C6 C9
-        .word   LC7BB-1                         ; C6C6 BA C7
+        .word   Expect_QUOTE-1                  ; C6C6 BA C7
         .word   LC703-1                         ; C6C8 02 C7
 ; ----------------------------------------------------------------------------
+; Table de conversion n -> message dans la table ERRMSG_table2
 AtnMsg_table:
         .byte   $01,$03,$04,$00,$07,$0C,$0D,$0E ; C6CA 01 03 04 00 07 0C 0D 0E
         .byte   $0F,$0A,$08,$09,$06,$05,$00,$00 ; C6D2 0F 0A 08 09 06 05 00 00
@@ -1584,13 +1666,14 @@ AtnMsg_table:
         .byte   $0B,$02,$16,$14                 ; C6E2 0B 02 16 14
 ; ----------------------------------------------------------------------------
 LC6E6:
-        cmp     #$3A                            ; C6E6 C9 3A
+        cmp     #':'                            ; C6E6 C9 3A
         jmp     LC7DD                           ; C6E8 4C DD C7
 
 ; ----------------------------------------------------------------------------
 LC6EB:
         jsr     LCBC6                           ; C6EB 20 C6 CB
         bcs     LC76A                           ; C6EE B0 7A
+
 LC6F0:
         ; Cherche une instruction de type 3 (Opérateur logique ou arithmétique)
         ldx     #$03                            ; C6F0 A2 03
@@ -1602,6 +1685,11 @@ LC6F0:
         jmp     LC6EB                           ; C6FA 4C EB C6
 
 ; ----------------------------------------------------------------------------
+; Teste VARTYP
+;
+; Sortie:
+;    C=0: variable/constante pas alpha
+;    C=1: variable/contante de type alpha
 LC6FD:
         bit     VARTYP                          ; C6FD 24 BA
         bmi     LC76A                           ; C6FF 30 69
@@ -1613,17 +1701,20 @@ LC703:
         bne     LC70A                           ; C703 D0 05
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$46                            ; C705 A9 46
         jmp     LCA69                           ; C707 4C 69 CA
 
 ; ----------------------------------------------------------------------------
 LC70A:
+        ; Attention: expression alphanumerique
         lda     #$02                            ; C70A A9 02
-        sta     $CA                             ; C70C 85 CA
+        sta     ATTNERR                         ; C70C 85 CA
+
 LC70E:
         jsr     LCBC6                           ; C70E 20 C6 CB
         bcs     LC76A                           ; C711 B0 57
+
 LC713:
         ; Cherche une instruction de type 3 (Opérateur logique ou arithmétique)
         ldx     #$03                            ; C713 A2 03
@@ -1670,6 +1761,11 @@ LC72A:
         jmp     LC70E                           ; C72D 4C 0E C7
 
 ; ----------------------------------------------------------------------------
+; Teste VARTYP
+;
+; Sortie:
+;    C=0: variable/contante de type alpha
+;    C=1: variable/constante pas alpha
 LC730:
         bit     VARTYP                          ; C730 24 BA
         bpl     LC76A                           ; C732 10 36
@@ -1678,8 +1774,10 @@ LC730:
 
 ; ----------------------------------------------------------------------------
 LC736:
+        ; Attnetion: ?
         lda     #$1A                            ; C736 A9 1A
-        sta     $CA                             ; C738 85 CA
+        sta     ATTNERR                         ; C738 85 CA
+
         sec                                     ; C73A 38
         rts                                     ; C73B 60
 
@@ -1690,6 +1788,8 @@ LC73C:
         bit     VARTYP                          ; C741 24 BA
         bpl     LC6F0                           ; C743 10 AB
         bmi     LC713                           ; C745 30 CC
+
+; ----------------------------------------------------------------------------
 LC747:
         jsr     LC7F9                           ; C747 20 F9 C7
         bcs     LC76A                           ; C74A B0 1E
@@ -1698,6 +1798,7 @@ LC747:
         beq     LC76A                           ; C751 F0 17
         cmp     #$24                            ; C753 C9 24
         bne     LC76A                           ; C755 D0 13
+
 LC757:
         jsr     LCD8A                           ; C757 20 8A CD
         inc     BUFTRV+6                        ; C75A EE 06 01
@@ -1722,11 +1823,14 @@ LC76C:
         ldx     BUFTRV+6                        ; C771 AE 06 01
         cpx     #$07                            ; C774 E0 07
         beq     LC76A                           ; C776 F0 F2
+
 LC778:
         ; Saute les espaces jusqu'au prochain caractère dans BUFEDT
         jsr     LC688                           ; C778 20 88 C6
-        cmp     #$28                            ; C77B C9 28
+
+        cmp     #'('                            ; C77B C9 28
         bne     LC785                           ; C77D D0 06
+
         jsr     LC868                           ; C77F 20 68 C8
         jmp     LC78A                           ; C782 4C 8A C7
 
@@ -1762,7 +1866,7 @@ LC78A:
         jsr     LC909                           ; C7A1 20 09 C9
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$3D                            ; C7A4 A9 3D
         jmp     LCA69                           ; C7A6 4C 69 CA
 
@@ -1773,44 +1877,49 @@ LC7A9:
         ldx     BUFTRV+6                        ; C7AE AE 06 01
         cpx     #$07                            ; C7B1 E0 07
         beq     LC76A                           ; C7B3 F0 B5
+
         cmp     #$24                            ; C7B5 C9 24
         beq     LC757                           ; C7B7 F0 9E
         bne     LC778                           ; C7B9 D0 BD
-LC7BB:
-        cmp     #$27                            ; C7BB C9 27
+
+; ----------------------------------------------------------------------------
+Expect_QUOTE:
+        cmp     #"'"                            ; C7BB C9 27
         jmp     LC7DD                           ; C7BD 4C DD C7
 
 ; ----------------------------------------------------------------------------
-LC7C0:
+Expect_EQ:
         ldx     #$2C                            ; C7C0 A2 2C
-        cmp     #$3D                            ; C7C2 C9 3D
+        cmp     #'='                            ; C7C2 C9 3D
         jmp     LC7D9                           ; C7C4 4C D9 C7
 
 ; ----------------------------------------------------------------------------
-LC7C7:
+Expect_COMMA:
         ldx     #$21                            ; C7C7 A2 21
-        cmp     #$2C                            ; C7C9 C9 2C
+        cmp     #','                            ; C7C9 C9 2C
         jmp     LC7D9                           ; C7CB 4C D9 C7
 
 ; ----------------------------------------------------------------------------
-LC7CE:
+Expect_LPAREN:
         ldx     #$2D                            ; C7CE A2 2D
-        cmp     #$28                            ; C7D0 C9 28
+        cmp     #'('                            ; C7D0 C9 28
         jmp     LC7D9                           ; C7D2 4C D9 C7
 
 ; ----------------------------------------------------------------------------
-LC7D5:
+Expect_RPAREN:
         ldx     #$2E                            ; C7D5 A2 2E
-        cmp     #$29                            ; C7D7 C9 29
+        cmp     #')'                            ; C7D7 C9 29
+
 LC7D9:
         bne     LC76A                           ; C7D9 D0 8F
         txa                                     ; C7DB 8A
         .byte   $2C                             ; C7DC 2C
+
 LC7DD:
         bne     LC76A                           ; C7DD D0 8B
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         jsr     LCA69                           ; C7DF 20 69 CA
 
         ; Passe au caractère suivant dans BUFEDT
@@ -1840,6 +1949,7 @@ LC7F5:
 LC7F7:
         sec                                     ; C7F7 38
         .byte   $24                             ; C7F8 24
+
 LC7F9:
         clc                                     ; C7F9 18
 
@@ -1862,6 +1972,7 @@ LC7F9:
         ; Saute les espaces jusqu'au prochain caractère dans BUFEDT
         jsr     LC688                           ; C80E 20 88 C6
 
+        ; Caractère alpha?
         jsr     min_MAJ                         ; C811 20 45 CB
         cmp     #"A"                            ; C814 C9 41
         bcc     LC7F5                           ; C816 90 DD
@@ -1869,6 +1980,7 @@ LC7F9:
         cmp     #"Z"+1                          ; C818 C9 5B
         bcs     LC7F5                           ; C81A B0 D9
 
+        ; Oui
 LC81C:
         jsr     LCD8A                           ; C81C 20 8A CD
         jsr     min_MAJ                         ; C81F 20 45 CB
@@ -2021,6 +2133,7 @@ LC8A0:
         ; ----------------------------------------------------------------------------
         ; On a trouvé la variable
 LC8B0:
+        ; XA = Code de la variable
         ldy     #$04                            ; C8B0 A0 04
         lda     ($92),y                         ; C8B2 B1 92
         tax                                     ; C8B4 AA
@@ -2028,15 +2141,17 @@ LC8B0:
         lda     ($92),y                         ; C8B6 B1 92
 
 LC8B8:
+        ; Compile le code de la variable dans le buffer L0600
         pha                                     ; C8B8 48
         txa                                     ; C8B9 8A
-        ; Compile ACC,#$FF en $600,$C5 et ajuste $C5 (ACC est inchangé)
+        ; Compile ACC,#$FF en L0600,$C5 et ajuste $C5 (ACC est inchangé)
         jsr     LCA7A                           ; C8BA 20 7A CA
 
-        ; Compile ACC,#$FF en $600,$C5 et ajuste $C5 (ACC est inchangé)
+        ; Compile ACC,#$FF en L0600,$C5 et ajuste $C5 (ACC est inchangé)
         pla                                     ; C8BD 68
         jsr     LCA7A                           ; C8BE 20 7A CA
 
+        ; Récupère le type de la variable dans A
         ldy     #$02                            ; C8C1 A0 02
         lda     ($92),y                         ; C8C3 B1 92
 
@@ -2054,6 +2169,8 @@ LC8B8:
 
         ldx     $C5                             ; C8D1 A6 C5
         ldy     $05FD,x                         ; C8D3 BC FD 05
+
+        ; Type n° de ligne?
         cmp     #$07                            ; C8D6 C9 07
         bne     LC8E4                           ; C8D8 D0 0A
 
@@ -2064,9 +2181,12 @@ LC8B8:
         beq     LC909                           ; C8E0 F0 27
         bne     LC90C                           ; C8E2 D0 28
 
+        ; ----------------------------------------------------------------------------
 LC8E4:
+        ; Type label?
         cmp     #$06                            ; C8E4 C9 06
         bne     LC906                           ; C8E6 D0 1E
+
 LC8E8:
         cpx     #$03                            ; C8E8 E0 03
         beq     LC903                           ; C8EA F0 17
@@ -2093,14 +2213,17 @@ LC903:
         ; Ajoute #$08 à $C2
         lda     #$08                            ; C903 A9 08
         .byte   $2C                             ; C905 2C
+
 LC906:
         ; Ajoute #$05 à $C2
         lda     #$05                            ; C906 A9 05
         .byte   $2C                             ; C908 2C
+
 LC909:
         ; Ajoute #$03 à $C2
         lda     #$03                            ; C909 A9 03
         .byte   $2C                             ; C90B 2C
+
 LC90C:
         ; Ajoute #$02 à $C2
         lda     #$02                            ; C90C A9 02
@@ -2133,6 +2256,7 @@ LC92B:
         cmp     #$07                            ; C930 C9 07
         beq     LC913                           ; C932 F0 DF
 
+        ; Chercher la variable avec un type ???
         lda     #$0B                            ; C934 A9 0B
         jmp     LC86A                           ; C936 4C 6A C8
 
@@ -2140,6 +2264,7 @@ LC92B:
 LC939:
         ; Saute les espaces jusqu'au prochain caractère dans BUFEDT
         jsr     LC688                           ; C939 20 88 C6
+
         cmp     #"@"                            ; C93C C9 40
         bne     LC985                           ; C93E D0 45
 
@@ -2179,7 +2304,7 @@ LC95F:
         lda     #$40                            ; C96D A9 40
 LC96F:
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         jsr     LCA69                           ; C96F 20 69 CA
 
         ; Saute les espaces jusqu'au prochain caractère dans BUFEDT
@@ -2192,7 +2317,7 @@ LC96F:
         lda     #$23                            ; C97B A9 23
 LC97D:
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         jsr     LCA69                           ; C97D 20 69 CA
 
         ; Passe au caractère suivant dans BUFEDT
@@ -2212,7 +2337,7 @@ LC987:
 ; ----------------------------------------------------------------------------
 LC989:
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$26                            ; C989 A9 26
         jmp     LCA69                           ; C98B 4C 69 CA
 
@@ -2225,6 +2350,7 @@ Expect_SET_OFF:
         bcc     LC9D1                           ; C991 90 3E
 
         inc     $C2                             ; C993 E6 C2
+
         ; "SET"?
         ; $B0 = PARAM_SET
         cmp     #$B0                            ; C995 C9 B0
@@ -2239,7 +2365,7 @@ LC99B:
 LC99D:
         stx     TXTPTR                          ; C99D 86 C4
 
-        ; Compile ACC,#$FF en $600,$C5 et ajuste $C5 (ACC est inchangé)
+        ; Compile ACC,#$FF en L0600,$C5 et ajuste $C5 (ACC est inchangé)
         jsr     LCA7A                           ; C99F 20 7A CA
 
         clc                                     ; C9A2 18
@@ -2503,7 +2629,7 @@ LCA67:
 
 ; ----------------------------------------------------------------------------
 ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
 ;
 ; Sortie:
 ;       A est conservé
@@ -2528,12 +2654,12 @@ LCA69:
         pla                                     ; CA79 68
 
 LCA7A:
-        ; Compile ACC,#$FF en $600,$C5 et ajuste $C5 (ACC est inchangé)
+        ; Compile ACC,#$FF en L0600,$C5 et ajuste $C5 (ACC est inchangé)
         ldx     $C5                             ; CA7A A6 C5
-        sta     $0600,x                         ; CA7C 9D 00 06
+        sta     L0600,x                         ; CA7C 9D 00 06
         pha                                     ; CA7F 48
         lda     #$FF                            ; CA80 A9 FF
-        sta     $0601,x                         ; CA82 9D 01 06
+        sta     L0600+1,x                       ; CA82 9D 01 06
         pla                                     ; CA85 68
         inc     $C5                             ; CA86 E6 C5
         clc                                     ; CA88 18
@@ -2579,7 +2705,7 @@ LCA9B:
 
         ; Masqque b0
         ; ACC := 0 m3 m2 m1 m0 l7 l6 0 -> Offset dans la table ($CB-CC)
-        ; $CB-CC) := Table de pointeurs versdes listes de variables
+        ; ($CB-CC) := Table de pointeurs vers des listes de variables
         ; Cherche le type de la variable
         and     #$FE                            ; CAA1 29 FE
         tay                                     ; CAA3 A8
@@ -2634,10 +2760,13 @@ LCAB9:
         cmp     $97                             ; CAC8 C5 97
         bne     LCADD                           ; CACA D0 11
 
+        ; Sous-type de l'instruction dans $95 et X
         ldy     #$03                            ; CACC A0 03
         lda     ($92),y                         ; CACE B1 92
         sta     $95                             ; CAD0 85 95
         tax                                     ; CAD2 AA
+
+        ; Type de l'instruction dans $94
         dey                                     ; CAD3 88
         lda     ($92),y                         ; CAD4 B1 92
         sta     $94                             ; CAD6 85 94
@@ -2665,9 +2794,9 @@ LCADD:
 
 ; ----------------------------------------------------------------------------
 LCAE8:
-        ; Flag GRAB ON
+        ; Flag GRAB/RELEASE = 0
         lda     fFlags                          ; CAE8 A5 8C
-        and     #$BF                            ; CAEA 29 BF
+        and     #%10111111                      ; CAEA 29 BF
         sta     fFlags                          ; CAEC 85 8C
 
 LCAEE:
@@ -2678,7 +2807,7 @@ LCAEE:
         sta     $CB                             ; CAF5 85 CB
         sty     $CC                             ; CAF7 84 CC
 
-        ; $$96-97 := $0000
+        ; $96-97 := $D000
         ; $96-97 sera incrémenté de #$3F à chaque passage en LCB2B
         lda     #$D0                            ; CAF9 A9 D0
         ldy     #$00                            ; CAFB A0 00
@@ -2686,16 +2815,18 @@ LCAEE:
         sty     $97                             ; CAFF 84 97
 
         ; RES := 0
+        ; Sert de pointeur pour la table ($CB-CC)
         sty     RES                             ; CB01 84 00
 
-        ; XA := (L07FD) (pointeur de départ)
-        ldx     L07FD                           ; CB03 AE FD 07
-        lda     L07FD+1                         ; CB06 AD FE 07
+        ; XA := (VARBOT) (pointeur début des variables)
+        ldx     VARBOT                          ; CB03 AE FD 07
+        lda     VARBOT+1                        ; CB06 AD FE 07
 
 LCB09:
         ; Sauvegarde XA en $92-93
         stx     $92                             ; CB09 86 92
         sta     $93                             ; CB0B 85 93
+        ; Dernière variable atteinte? -> Fin
         ldy     #$01                            ; CB0D A0 01
         lda     ($92),y                         ; CB0F B1 92
         beq     LCB4F                           ; CB11 F0 3C
@@ -2711,7 +2842,7 @@ LCB13:
         sbc     $96                             ; CB1C E5 96
         bcs     LCB2B                           ; CB1E B0 0B
 
-        ; Récupère en XA la valeur du pointeur en ($92),0
+        ; Passage à la variable suivante de la table
         ldy     #$00                            ; CB20 A0 00
         lda     ($92),y                         ; CB22 B1 92
         tax                                     ; CB24 AA
@@ -2723,13 +2854,15 @@ LCB13:
 
 ; ----------------------------------------------------------------------------
 LCB2B:
-        ; Place la valeur du pointeur $92-93 en ($CB),Y
         ldy     RES                             ; CB2B A4 00
+
+        ; Place la valeur du pointeur $92-93 en ($CB),Y
         lda     $92                             ; CB2D A5 92
         sta     ($CB),y                         ; CB2F 91 CB
         iny                                     ; CB31 C8
         lda     $93                             ; CB32 A5 93
         sta     ($CB),y                         ; CB34 91 CB
+
         iny                                     ; CB36 C8
         sty     RES                             ; CB37 84 00
 
@@ -2742,6 +2875,7 @@ LCB2B:
         inc     $96                             ; CB41 E6 96
         bcs     LCB13                           ; CB43 B0 CE
 
+; ----------------------------------------------------------------------------
 ; Conversion minuscules/MAJUSCULES
 min_MAJ:
         cmp     #"a"                            ; CB45 C9 61
@@ -2847,6 +2981,7 @@ LCB95:
         ; Saute les espaces jusqu'au prochain caractère dans BUFEDT
         jsr     LC688                           ; CB9C 20 88 C6
 
+        ; Chercher la variable avec un type Constante Alpha
         lda     #$10                            ; CB9F A9 10
         jsr     LC86A                           ; CBA1 20 6A C8
 
@@ -2868,11 +3003,14 @@ LCBA9:
 
 ; ----------------------------------------------------------------------------
 LCBBD:
+        ; Attention: caractere
         lda     #$1B                            ; CBBD A9 1B
         .byte   $2C                             ; CBBF 2C
 LCBC0:
+        ; Attention:2eme "'"
         lda     #$15                            ; CBC0 A9 15
-        sta     $CA                             ; CBC2 85 CA
+        sta     ATTNERR                         ; CBC2 85 CA
+
 LCBC4:
         sec                                     ; CBC4 38
         rts                                     ; CBC5 60
@@ -2887,10 +3025,11 @@ LCBC6:
 
         ; Saute les espaces jusqu'au prochain caractère dans BUFEDT
         jsr     LC688                           ; CBD0 20 88 C6
-        cmp     #$28                            ; CBD3 C9 28
+
+        cmp     #'('                            ; CBD3 C9 28
         bne     LCBFD                           ; CBD5 D0 26
 
-        lda     $CA                             ; CBD7 A5 CA
+        lda     ATTNERR                         ; CBD7 A5 CA
         pha                                     ; CBD9 48
 
         ; Appel à la routine n°X de la table LC69C (sortie de la routine avec C=1 si erreur)
@@ -2916,7 +3055,7 @@ LCBC6:
         pla                                     ; CBEE 68
         bcs     LCBC4                           ; CBEF B0 D3
 
-        sta     $CA                             ; CBF1 85 CA
+        sta     ATTNERR                         ; CBF1 85 CA
         rts                                     ; CBF3 60
 
 ; ----------------------------------------------------------------------------
@@ -2977,13 +3116,15 @@ LCC21:
 
         ; Trouvée
         jsr     LCE06                           ; CC28 20 06 CE
+
+        ;
         ldy     #$03                            ; CC2B A0 03
         lda     ($92),y                         ; CC2D B1 92
         sta     $95                             ; CC2F 85 95
         cmp     #$02                            ; CC31 C9 02
         bcc     LCC97                           ; CC33 90 62
 
-        lda     $CA                             ; CC35 A5 CA
+        lda     ATTNERR                         ; CC35 A5 CA
         pha                                     ; CC37 48
 
         ; Appel à la routine n°X de la table LC69C (sortie de la routine avec C=1 si erreur)
@@ -3010,18 +3151,20 @@ LCC48:
         bcc     LCC8A                           ; CC52 90 36
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$3B                            ; CC54 A9 3B
         jsr     LCA69                           ; CC56 20 69 CA
 
         ; Saute les espaces jusqu'au prochain caractère dans BUFEDT
         jsr     LC688                           ; CC59 20 88 C6
-        cmp     #$2C                            ; CC5C C9 2C
+
+        cmp     #','                            ; CC5C C9 2C
         beq     LCC68                           ; CC5E F0 08
 
 LCC60:
+        ; Attention: "," ?
         lda     #$09                            ; CC60 A9 09
-        sta     $CA                             ; CC62 85 CA
+        sta     ATTNERR                         ; CC62 85 CA
         pla                                     ; CC64 68
 LCC65:
         pla                                     ; CC65 68
@@ -3043,13 +3186,14 @@ LCC68:
         bcc     LCC8A                           ; CC74 90 14
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$3C                            ; CC76 A9 3C
         jsr     LCA69                           ; CC78 20 69 CA
 
         ; Saute les espaces jusqu'au prochain caractère dans BUFEDT
         jsr     LC688                           ; CC7B 20 88 C6
-        cmp     #$2C                            ; CC7E C9 2C
+
+        cmp     #','                            ; CC7E C9 2C
         bne     LCC60                           ; CC80 D0 DE
 
         ; Passe au caractère suivant dans BUFEDT
@@ -3068,12 +3212,14 @@ LCC8A:
         pla                                     ; CC91 68
         tax                                     ; CC92 AA
         pla                                     ; CC93 68
-        sta     $CA                             ; CC94 85 CA
+        sta     ATTNERR                         ; CC94 85 CA
         txa                                     ; CC96 8A
+
 LCC97:
         ldx     #$11                            ; CC97 A2 11
         tay                                     ; CC99 A8
         beq     LCCA6                           ; CC9A F0 0A
+
         cmp     #$02                            ; CC9C C9 02
         beq     LCCA6                           ; CC9E F0 06
 
@@ -3088,7 +3234,7 @@ LCCA6:
 
 ; ----------------------------------------------------------------------------
 LCCAA:
-        lda     $CA                             ; CCAA A5 CA
+        lda     ATTNERR                         ; CCAA A5 CA
         pha                                     ; CCAC 48
 
         ; Appel à la routine n°X de la table LC69C (sortie de la routine avec C=1 si erreur)
@@ -3096,7 +3242,7 @@ LCCAA:
         jsr     LC676                           ; CCAF 20 76 C6
 
         pla                                     ; CCB2 68
-        sta     $CA                             ; CCB3 85 CA
+        sta     ATTNERR                         ; CCB3 85 CA
         bcs     LCCCA                           ; CCB5 B0 13
 
         lda     #$10                            ; CCB7 A9 10
@@ -3115,6 +3261,7 @@ LCCC5:
 LCCC8:
         pla                                     ; CCC8 68
         pla                                     ; CCC9 68
+
 LCCCA:
         sec                                     ; CCCA 38
         rts                                     ; CCCB 60
@@ -3126,52 +3273,72 @@ LCCCC:
 
         ; Saute les espaces jusqu'au prochain caractère dans BUFEDT
         jsr     LC688                           ; CCD0 20 88 C6
+
+        ; Caractère numerique?
         cmp     #"0"                            ; CCD3 C9 30
         bcc     LCCCA                           ; CCD5 90 F3
 
         cmp     #"9"+1                            ; CCD7 C9 3A
         bcs     LCCCA                           ; CCD9 B0 EF
+        ; masque l'instruction sec
         .byte   $24                             ; CCDB 24
 
 LCCDC:
         sec                                     ; CCDC 38
         php                                     ; CCDD 08
+
+        ; Calcule l'adresse du caractère courant dans
+        ; le buffer BUFEDT
+        ; AY = $0590 + (TXTPTR)
         clc                                     ; CCDE 18
         lda     TXTPTR                          ; CCDF A5 C4
-        adc     #$90                            ; CCE1 69 90
+        adc     #<BUFEDT                        ; CCE1 69 90
         pha                                     ; CCE3 48
         lda     #$00                            ; CCE4 A9 00
-        adc     #$05                            ; CCE6 69 05
+        adc     #>BUFEDT                        ; CCE6 69 05
         tay                                     ; CCE8 A8
+
         pla                                     ; CCE9 68
         plp                                     ; CCEA 28
         php                                     ; CCEB 08
         bcs     LCCF7                           ; CCEC B0 09
 
+       ; Conversion de la chaine décimale en AY en binaire
+       ; dans AY
        _XDECAY                                  ; CCEE 00 26
 
+        ; AY = valeur en binaire
+        ; X = longueur de la chaine
         stx     RESB                            ; CCF0 86 02
         sta     FACC1M                          ; CCF2 85 61
         sty     FACC1M+1                        ; CCF4 84 62
+        ; masque l'instruction _XDECA1
         .byte   $2C                             ; CCF6 2C
+
 LCCF7:
+        ; Conversion de la chaine en AY en binaire
+        ; dans ACC1
+        ; La chaine peut représenter un nombre décimal,
+        ; binaire ou hexa
        _XDECA1                                  ; CCF7 00 69
 
+        ; Mise à jour du pointeur TXTPTR
         clc                                     ; CCF9 18
         lda     RESB                            ; CCFA A5 02
         adc     TXTPTR                          ; CCFC 65 C4
         sta     TXTPTR                          ; CCFE 85 C4
+
         txa                                     ; CD00 8A
         bmi     LCD60                           ; CD01 30 5D
 
         ldy     #$00                            ; CD03 A0 00
-
 LCD05:
         lda     (RES),y                         ; CD05 B1 00
         cmp     #$20                            ; CD07 C9 20
         beq     LCD0E                           ; CD09 F0 03
 
         jsr     LCD8C                           ; CD0B 20 8C CD
+
 LCD0E:
         iny                                     ; CD0E C8
         cpy     RESB                            ; CD0F C4 02
@@ -3207,15 +3374,21 @@ LCD38:
         ora     #$7F                            ; CD3A 09 7F
         and     FACC1M                          ; CD3C 25 61
         sta     FACC1M                          ; CD3E 85 61
+
+        ; Boucle de copie des octets $60->$64 vers BUFTRV,$C8
+        ; Y=-5
         ldy     #$FB                            ; CD40 A0 FB
 LCD42:
-        lda     CHAR,y                          ; CD42 B9 65 FF
+        lda     $10000-$100+$64+1,y             ; CD42 B9 65 FF
         jsr     LCD8C                           ; CD45 20 8C CD
         iny                                     ; CD48 C8
         bne     LCD42                           ; CD49 D0 F7
 
+        ; Chercher la variable avec un type Constante Numérique
+        ; (flottant)
         lda     #$12                            ; CD4B A9 12
         jsr     LC86A                           ; CD4D 20 6A C8
+
         lda     #$12                            ; CD50 A9 12
         jmp     LCD7D                           ; CD52 4C 7D CD
 
@@ -3230,8 +3403,9 @@ LCD55:
 ; ----------------------------------------------------------------------------
 LCD60:
         pla                                     ; CD60 68
+        ; Attention: nombre trop grand
         lda     #$18                            ; CD61 A9 18
-        sta     $CA                             ; CD63 85 CA
+        sta     ATTNERR                         ; CD63 85 CA
         sec                                     ; CD65 38
         rts                                     ; CD66 60
 
@@ -3243,19 +3417,28 @@ LCD67:
         jsr     LCD8C                           ; CD6E 20 8C CD
         lda     TR3                             ; CD71 A5 0F
         jsr     LCD8C                           ; CD73 20 8C CD
+
+        ; Chercher la variable avec un type Constante Numérique
+        ; (entier)
         lda     #$11                            ; CD76 A9 11
         jsr     LC86A                           ; CD78 20 6A C8
+
         lda     #$11                            ; CD7B A9 11
+
 LCD7D:
         cmp     #$10                            ; CD7D C9 10
         beq     LCD85                           ; CD7F F0 04
 
+        ; Force b7 de VARTYP à 0
+        ; (numérique)
         lsr     VARTYP                          ; CD81 46 BA
         clc                                     ; CD83 18
         rts                                     ; CD84 60
 
-; ----------------------------------------------------------------------------
+        ; ----------------------------------------------------------------------------
 LCD85:
+        ; Force b7 de VARTYP à 1
+        ; (alpha)
         sec                                     ; CD85 38
         ror     VARTYP                          ; CD86 66 BA
         clc                                     ; CD88 18
@@ -3364,7 +3547,7 @@ LCE02:
 ; Entrée:
 ;        $92-93: Ponteur vers l'instruction à compiler
 LCE06:
-        ; Compile ACC,#$FF en $600,$C5 et ajuste $C5 (ACC est inchangé)
+        ; Compile ACC,#$FF en L0600,$C5 et ajuste $C5 (ACC est inchangé)
         ; Empile le token pour plus tard
         ldy     #$04                            ; CE06 A0 04
         lda     ($92),y                         ; CE08 B1 92
@@ -3378,7 +3561,7 @@ LCE06:
         ; Pour une instruction dont le token est $C0
         ; on compile aussi son token_param
         ;
-        ; Compile ACC,#$FF en $600,$C5 et ajuste $C5 (ACC est inchangé)
+        ; Compile ACC,#$FF en L0600,$C5 et ajuste $C5 (ACC est inchangé)
         iny                                     ; CE12 C8
         lda     ($92),y                         ; CE13 B1 92
         jsr     LCA7A                           ; CE15 20 7A CA
@@ -3465,42 +3648,60 @@ LCE51:
 ; ----------------------------------------------------------------------------
 LCE5E:
         jsr     LCE51                           ; CE5E 20 51 CE
+
 LCE61:
         lda     #$00                            ; CE61 A9 00
         sta     TR2                             ; CE63 85 0E
         sta     ptr00BE+1                       ; CE65 85 BF
+
         lda     ptr_07F5                        ; CE67 AD F5 07
         ldy     ptr_07F5+1                      ; CE6A AC F6 07
         sta     RES                             ; CE6D 85 00
         sty     RES+1                           ; CE6F 84 01
+
 LCE71:
-        ldx     L07FD                           ; CE71 AE FD 07
-        lda     L07FD+1                         ; CE74 AD FE 07
+        ; XA = adresse de début des variables
+        ldx     VARBOT                          ; CE71 AE FD 07
+        lda     VARBOT+1                        ; CE74 AD FE 07
+
 LCE77:
+       ; Place le type de la variable dans X
         stx     TR0                             ; CE77 86 0C
         sta     TR1                             ; CE79 85 0D
         ldy     #$02                            ; CE7B A0 02
         lda     (TR0),y                         ; CE7D B1 0C
         tax                                     ; CE7F AA
+
+        ; Place dans A l'offset vers la valeur
+        ; de la variable
         ldy     #$06                            ; CE80 A0 06
         lda     (TR0),y                         ; CE82 B1 0C
+
+        ; Variable de type alpha?
         cpx     #$08                            ; CE84 E0 08
         beq     LCE8E                           ; CE86 F0 06
 
+        ; Variable de type tableau alpha?
         cpx     #$0C                            ; CE88 E0 0C
         bne     LCEBD                           ; CE8A D0 31
 
+        ; +1 (la longueur d'un tableau est sur 2 octets)
         adc     #$01                            ; CE8C 69 01
+
 LCE8E:
+       ; Place l'adresse de la valeur dans TR6
         clc                                     ; CE8E 18
         adc     TR0                             ; CE8F 65 0C
         sta     TR6                             ; CE91 85 12
         lda     TR1                             ; CE93 A5 0D
         adc     #$00                            ; CE95 69 00
         sta     TR7                             ; CE97 85 13
+
+        ; Variable de type alpha?
         cpx     #$08                            ; CE99 E0 08
         beq     LCEBA                           ; CE9B F0 1D
 
+        ; Traitement d'un tableau
 LCE9D:
         jsr     LCED9                           ; CE9D 20 D9 CE
         ldy     #$00                            ; CEA0 A0 00
@@ -3520,11 +3721,13 @@ LCEAD:
         iny                                     ; CEB3 C8
         cmp     (TR0),y                         ; CEB4 D1 0C
         bne     LCE9D                           ; CEB6 D0 E5
-
         beq     LCEBD                           ; CEB8 F0 03
 
+        ; ----------------------------------------------------------------------------
+        ; Traitement d'une variable alpha
 LCEBA:
         jsr     LCED9                           ; CEBA 20 D9 CE
+
 LCEBD:
         ldy     #$00                            ; CEBD A0 00
         lda     (TR0),y                         ; CEBF B1 0C
@@ -3546,15 +3749,19 @@ LCEBD:
 
 ; ----------------------------------------------------------------------------
 LCED9:
+        ; Longueur de la chaine nulle? -> Fin
         ldy     #$00                            ; CED9 A0 00
         lda     (TR6),y                         ; CEDB B1 12
         beq     LCF23                           ; CEDD F0 44
 
+        ; TR3 = longueur de la chaine
         sta     TR3                             ; CEDF 85 0F
+
         iny                                     ; CEE1 C8
         lda     ptr00BE+1                       ; CEE2 A5 BF
         beq     LCEFD                           ; CEE4 F0 17
 
+        ; Adresse de la chaine == (RES)?
         lda     (TR6),y                         ; CEE6 B1 12
         cmp     RES                             ; CEE8 C5 00
         bne     LCF23                           ; CEEA D0 37
@@ -3564,6 +3771,8 @@ LCED9:
         cmp     RES+1                           ; CEEF C5 01
         bne     LCF23                           ; CEF1 D0 30
 
+        ; Ici l'adresse de la chaine == (RES)
+        ; nouvelle adresse de la chaine = (ptr00BE)
         lda     ptr00BE+1                       ; CEF3 A5 BF
         sta     (TR6),y                         ; CEF5 91 12
         dey                                     ; CEF7 88
@@ -3595,14 +3804,16 @@ LCEFD:
         ldy     TR7                             ; CF1D A4 13
         sta     TR4                             ; CF1F 85 10
         sty     TR5                             ; CF21 84 11
+
 LCF23:
         rts                                     ; CF23 60
 
 ; ----------------------------------------------------------------------------
 LCF24:
+        ; Sauvegarde A
         pha                                     ; CF24 48
-        eor     #$FF                            ; CF25 49 FF
 
+        eor     #$FF                            ; CF25 49 FF
         sec                                     ; CF27 38
         adc     ptr_07F7                        ; CF28 6D F7 07
         tax                                     ; CF2B AA
@@ -3626,8 +3837,11 @@ LCF43:
         sta     ptr00BE+1                       ; CF45 85 BF
         stx     ptr_07F7                        ; CF47 8E F7 07
         sta     ptr_07F7+1                      ; CF4A 8D F8 07
+
         tay                                     ; CF4D A8
         ror     VARTYP                          ; CF4E 66 BA
+
+        ; Restaure A
         pla                                     ; CF50 68
         rts                                     ; CF51 60
 
@@ -3644,23 +3858,39 @@ LCF5C:
         lda     FACC1M                          ; CF5C A5 61
         ldy     FACC1M+1                        ; CF5E A4 62
         ldx     FACC1E                          ; CF60 A6 60
+
+;
+; Entrée:
+;   AY: Adresse de la chaine
+;    X; Longueur de la chaine
 LCF62:
+        ; Sauvegarde l'adresse de la chaine
         pha                                     ; CF62 48
         tya                                     ; CF63 98
         pha                                     ; CF64 48
+
         txa                                     ; CF65 8A
         jsr     LCF52                           ; CF66 20 52 CF
         sta     RES                             ; CF69 85 00
+
+        ; Restaure l'adresse de la chaine dans XY
         pla                                     ; CF6B 68
         tay                                     ; CF6C A8
         pla                                     ; CF6D 68
         tax                                     ; CF6E AA
+
+        ; Longueur de la chaine dans A
         lda     RES                             ; CF6F A5 00
+
+        ; Copie l'adresse dans RES
         stx     RES                             ; CF71 86 00
         sty     RES+1                           ; CF73 84 01
+
+        ; Longueur nulle?
         tay                                     ; CF75 A8
         beq     LCF80                           ; CF76 F0 08
 
+        ; Boucle de copie de la chaine vers (ptr00BE)
 LCF78:
         dey                                     ; CF78 88
         lda     (RES),y                         ; CF79 B1 00
@@ -3672,36 +3902,67 @@ LCF80:
         rts                                     ; CF80 60
 
 ; ----------------------------------------------------------------------------
+; Initialise un tableau
+;
+; Appelé depuis Passe_Ic dans le cas où la variable
+; est un tableau alpha ou numériue
+;
+; Entrée:
+;    TR0: Adresse d'un descripteur de variable dans la table
 LCF81:
+        ; X: flag tableau dimensioné
+        ;    $00: tableau numérique dimensioné
+        ;    $03: tableau alpha ou numérique non dimensioné
+        ;    $80: tableau alpha dimensioné
         ldy     #$03                            ; CF81 A0 03
         lda     (TR0),y                         ; CF83 B1 0C
         tax                                     ; CF85 AA
+
+        ; Y: offset vers le nombre d'éléments du tableau
         ldy     #$06                            ; CF86 A0 06
         lda     (TR0),y                         ; CF88 B1 0C
         tay                                     ; CF8A A8
+
+        ; Tableau numérique dimensioné?
         txa                                     ; CF8B 8A
         beq     LCF98                           ; CF8C F0 0A
 
+        ; non (cas d'un tableau numérique non dimensioné)
+        ; dimension par défaut: 10(+1)
         lda     #$0B                            ; CF8E A9 0B
         sta     (TR0),y                         ; CF90 91 0C
         iny                                     ; CF92 C8
         lda     #$00                            ; CF93 A9 00
         sta     (TR0),y                         ; CF95 91 0C
         dey                                     ; CF97 88
+
 LCF98:
+        ; Sauvegarde de l'offset vers le nombre d'éléments
         tya                                     ; CF98 98
         pha                                     ; CF99 48
+
+        ; Dimension du tableau ou index d'un élément (poids faible)
         lda     (TR0),y                         ; CF9A B1 0C
         tax                                     ; CF9C AA
+
+        ; Dimension du tableau ou index d'un élément (poids fort)
         iny                                     ; CF9D C8
         lda     (TR0),y                         ; CF9E B1 0C
         pha                                     ; CFA0 48
+
+        ; Type du tableau (alpha/numérique) dans Y
         ldy     #$02                            ; CFA1 A0 02
         lda     (TR0),y                         ; CFA3 B1 0C
         tay                                     ; CFA5 A8
+
         pla                                     ; CFA6 68
+        ; Ici:
+        ;    AX: dimension du tableau ou index d'un élément
+        ;     Y: type du tableau
+        ; Calcule la taille du tableau ou l'offset d'un élément (résultat dans AX et RES)
         jsr     LD002                           ; CFA7 20 02 D0
 
+        ; AX = Taille du tableau + offset
         clc                                     ; CFAA 18
         pla                                     ; CFAB 68
         adc     RES                             ; CFAC 65 00
@@ -3709,6 +3970,7 @@ LCF98:
         inx                                     ; CFB0 E8
 
 LCFB1:
+        ; Calcule l'adresse de fin du tableau dans DECCIB
         clc                                     ; CFB1 18
         adc     TR0                             ; CFB2 65 0C
         sta     DECCIB                          ; CFB4 85 08
@@ -3716,6 +3978,9 @@ LCFB1:
         adc     TR1                             ; CFB7 65 0D
         sta     DECCIB+1                        ; CFB9 85 09
 
+        ; Calcule le nombre d'octets à ajouter au tableau
+        ; par rapport à sa taille actuelle (peut être négatif)
+        ; résultat dans TR3-TR4
         sec                                     ; CFBB 38
         ldy     #$00                            ; CFBC A0 00
         lda     DECCIB                          ; CFBE A5 08
@@ -3725,26 +3990,36 @@ LCFB1:
         lda     DECCIB+1                        ; CFC5 A5 09
         sbc     (TR0),y                         ; CFC7 F1 0C
         sta     TR4                             ; CFC9 85 10
+
+        ; Taille nulle? -> fin
         ora     TR3                             ; CFCB 05 0F
         beq     LD001                           ; CFCD F0 32
 
+        ; Adresse de fin des variables -> DECFIN
         lda     SCEFIN                          ; CFCF A5 5E
         ldy     SCEFIN+1                        ; CFD1 A4 5F
         sta     DECFIN                          ; CFD3 85 06
         sty     DECFIN+1                        ; CFD5 84 07
 
+        ; Calcule la nouvelle fin des variables
         clc                                     ; CFD7 18
         adc     TR3                             ; CFD8 65 0F
         sta     SCEFIN                          ; CFDA 85 5E
         tya                                     ; CFDC 98
         adc     TR4                             ; CFDD 65 10
         sta     SCEFIN+1                        ; CFDF 85 5F
+
+        ; Adresse de début du bloc à décaler
+        ; (adresse de la variable suivante)
         ldy     #$00                            ; CFE1 A0 00
         lda     (TR0),y                         ; CFE3 B1 0C
         sta     DECDEB                          ; CFE5 85 04
         iny                                     ; CFE7 C8
         lda     (TR0),y                         ; CFE8 B1 0C
         sta     DECDEB+1                        ; CFEA 85 05
+
+        ; Décalage de toutes les variables qui suivent
+        ; le tableau considéré
        _XDECAL                                  ; CFEC 00 18
 
         ; Mise à jour des liens (fin lorsque le poids fort d'un lien = 0)
@@ -3756,6 +4031,7 @@ LCFB1:
         pha                                     ; CFF4 48
         jsr     LC3C2                           ; CFF5 20 C2 C3
 
+        ; Restaure TR0 et initialise la variable à $00
         pla                                     ; CFF8 68
         sta     TR1                             ; CFF9 85 0D
         pla                                     ; CFFB 68
@@ -3767,25 +4043,45 @@ LD001:
         rts                                     ; D001 60
 
 ; ----------------------------------------------------------------------------
+; Calcule la taille d'un tableau ou l'offset d'un élément
+;
+; Entrée:
+;    AX: dimension du tableau (ou index élément)
+;     Y: type du tableau
+;
+; Sortie:
+;    AX: dimension*3+2 (si alpha) ou dimension*5+2 (si numérique)
+;     Y: inchangé
+;   RES: AX
+;  RESB: dimension du tableau (index élément)
 LD002:
         stx     RESB                            ; D002 86 02
         sta     RES+1                           ; D004 85 01
         sta     RESB+1                          ; D006 85 03
+
+        ; Dimension x2
         txa                                     ; D008 8A
         asl     a                               ; D009 0A
         rol     RES+1                           ; D00A 26 01
+
+        ; Tableau alpha?
         cpy     #$0C                            ; D00C C0 0C
         beq     LD013                           ; D00E F0 03
 
+        ; Dimension x4
         asl     a                               ; D010 0A
         rol     RES+1                           ; D011 26 01
+
 LD013:
         clc                                     ; D013 18
         adc     RESB                            ; D014 65 02
         pha                                     ; D016 48
+
         lda     RES+1                           ; D017 A5 01
         adc     RESB+1                          ; D019 65 03
         tax                                     ; D01B AA
+
+        ; +2
         pla                                     ; D01C 68
         adc     #$02                            ; D01D 69 02
         sta     RES                             ; D01F 85 00
@@ -3794,6 +4090,7 @@ LD013:
         inx                                     ; D024 E8
 
 LD025:
+        ; AX = RES
         stx     RES+1                           ; D025 86 01
         pla                                     ; D027 68
         rts                                     ; D028 60
@@ -3805,32 +4102,49 @@ Error_IDXARY:
         jmp     Error_X                         ; D02B 4C 7E D1
 
 ; ----------------------------------------------------------------------------
+; Calcule l'adresse d'un élément d'un tableau
+;
+; Entrée:
+;
+; Sortie:
+;    AX: Adresse de l'élément
+;
 LD02E:
         jsr     LD1F7                           ; D02E 20 F7 D1
+
+        ; Place dans Y l'offset vers la dimension du tableau
         ldy     #$06                            ; D031 A0 06
         lda     ($92),y                         ; D033 B1 92
         tay                                     ; D035 A8
+
+        ; Vérifie que l'index demandé n'est pas
+        ; supérieur à la dimension du tableau
         lda     FACC1M                          ; D036 A5 61
         cmp     ($92),y                         ; D038 D1 92
-
         lda     FACC1M+1                        ; D03A A5 62
         iny                                     ; D03C C8
         sbc     ($92),y                         ; D03D F1 92
         bcs     Error_IDXARY                    ; D03F B0 E8
 
+        ; Récupère le type du tableau
         ldy     #$02                            ; D041 A0 02
         lda     ($92),y                         ; D043 B1 92
         tay                                     ; D045 A8
+        ; Récupère l'index de l'élément du tableau
         ldx     FACC1M                          ; D046 A6 61
         lda     FACC1M+1                        ; D048 A5 62
+        ; Calcule l'offset de l'élément (résultat dans AX et RES)
         jsr     LD002                           ; D04A 20 02 D0
 
+        ; Ajoute l'offset vers le début des valeurs du tableau
         clc                                     ; D04D 18
         ldy     #$06                            ; D04E A0 06
         adc     ($92),y                         ; D050 71 92
         bcc     LD056                           ; D052 90 02
         inx                                     ; D054 E8
 
+        ; Calcule l'adresse de la valeur de l'élément du tableau
+        ; résultat dans AX
         clc                                     ; D055 18
 LD056:
         adc     $92                             ; D056 65 92
@@ -3842,37 +4156,62 @@ LD056:
         rts                                     ; D05E 60
 
 ; ----------------------------------------------------------------------------
+; Ajoute le mot suivant l'appel à cette routine dans le tampon $07A0
+;
 ; Appel vers LD05F compilé par la routine en $DEFC
+;
+; On arrive ici par:
+;    jsr LD05F
+;    .byte xx,yy
+LD05F
+        ; Place l'adresse au sommet de la pile dans RES
+        ; et cette adresse +3 dans RESB
         pla                                     ; D05F 68
         sta     RES                             ; D060 85 00
 
         clc                                     ; D062 18
         adc     #$03                            ; D063 69 03
         sta     RESB                            ; D065 85 02
+
         pla                                     ; D067 68
         sta     RES+1                           ; D068 85 01
         adc     #$00                            ; D06A 69 00
         sta     RESB+1                          ; D06C 85 03
+
+        ; X = Pointeur pour $07A0
         ldx     $07A0                           ; D06E AE A0 07
+
+        ; Ajoute le mot suivant l'appel à la routine
+        ; dans le tampon $07A0
         ldy     #$01                            ; D071 A0 01
         lda     (RES),y                         ; D073 B1 00
         sta     $07A2,x                         ; D075 9D A2 07
         iny                                     ; D078 C8
         lda     (RES),y                         ; D079 B1 00
         sta     $07A3,x                         ; D07B 9D A3 07
+
+        ; Incrémente le pointeur du tampon $07A0
         inx                                     ; D07E E8
         inx                                     ; D07F E8
         stx     $07A0                           ; D080 8E A0 07
+
+        ; Retour vers l'instruction qui suit l'appel
         jmp     (RESB)                          ; D083 6C 02 00
 
 ; ----------------------------------------------------------------------------
 ; Appel vers LD086 compilé par la routine en $DC97
+; C=0 -> on veut récupérer la valeur de l'élément dans FACC1
 LD086
         clc                                     ; D086 18
+        ; Masque l'instruction suivante
         .byte   $24                             ; D087 24
-; Appel vers LD086 compilé par la routine en $DC97
+
+; Appel vers LD088 compilé par la routine en $DC97
+; C=1 -> on veut récupérer l'adresse de l'élément dans $C4-C5
+; et l'adresse de base du tableau dans $BC-BD
 LD088
         sec                                     ; D088 38
+
         ldx     $07A0                           ; D089 AE A0 07
         lda     $07A1,x                         ; D08C BD A1 07
         sta     $93                             ; D08F 85 93
@@ -3883,55 +4222,74 @@ LD088
         stx     $07A0                           ; D098 8E A0 07
         bcc     LD0B1                           ; D09B 90 14
 
+        ; Place l'adresse de l'élément dans $C4-C5
         jsr     LD02E                           ; D09D 20 2E D0
         sta     TXTPTR                          ; D0A0 85 C4
         stx     $C5                             ; D0A2 86 C5
+
         lda     $92                             ; D0A4 A5 92
         ldy     $93                             ; D0A6 A4 93
         sta     $BC                             ; D0A8 85 BC
         sty     $BD                             ; D0AA 84 BD
+
         lda     #$FF                            ; D0AC A9 FF
         sta     $C3                             ; D0AE 85 C3
         rts                                     ; D0B0 60
 
         ; ----------------------------------------------------------------------------
 LD0B1:
+        ; Place l'adresse de l'élément dans RES
         jsr     LD02E                           ; D0B1 20 2E D0
         sta     RES                             ; D0B4 85 00
         stx     RES+1                           ; D0B6 86 01
+
+        ; Tableau alpha? -> LD004
         ldy     #$02                            ; D0B8 A0 02
         lda     ($92),y                         ; D0BA B1 92
         cmp     #$0C                            ; D0BC C9 0C
         beq     LD0D4                           ; D0BE F0 14
 
+        ; Copie les 5 octets de la variable vers FACC1
         jsr     LD0DC                           ; D0C0 20 DC D0
+
         lda     FACC1M                          ; D0C3 A5 61
         sta     FACC1S                          ; D0C5 85 65
         ora     #$80                            ; D0C7 09 80
         sta     FACC1M                          ; D0C9 85 61
         lda     #$00                            ; D0CB A9 00
         sta     FACC1EX                         ; D0CD 85 66
+
+        ; Type numérique (flottant)
         lda     #$40                            ; D0CF A9 40
         sta     VARTYP                          ; D0D1 85 BA
+
         rts                                     ; D0D3 60
 
         ; ----------------------------------------------------------------------------
 LD0D4:
+        ; Copie les 3 octets de la variable vers FACC1
+        ; (longueur et adresse)
         jsr     LD0DF                           ; D0D4 20 DF D0
+
+        ; variable de type alpha
         lda     #$80                            ; D0D7 A9 80
         sta     VARTYP                          ; D0D9 85 BA
         rts                                     ; D0DB 60
 
         ; ----------------------------------------------------------------------------
 LD0DC:
+        ; 5 octets (variable numérique)
         ldx     #$05                            ; D0DC A2 05
         .byte   $2C                             ; D0DE 2C
+
 LD0DF:
+        ; 3 octets (variable alpha)
         ldx     #$03                            ; D0DF A2 03
 
         ldy     #$00                            ; D0E1 A0 00
 
 LD0E3:
+        ; Boucle de copie de x octets vers FACC1
         lda     (RES),y                         ; D0E3 B1 00
         sta     FACC1E,y                        ; D0E5 99 60 00
         iny                                     ; D0E8 C8
@@ -3941,37 +4299,59 @@ LD0E3:
         rts                                     ; D0EC 60
 
 ; ----------------------------------------------------------------------------
+; Recherche l'adresse d'exécution et source d'une ligne du programme
+;
+; Entrée:
+;    AY: n° de ligne à chercher
+;
+; Sortie:
+;    C=0: ligne non trouvée
+;    C=1: ligne troouvée
+; ptr00C0: pointeur dans le programme source
+; ptr00BE: adresse d'exécution de la ligne (dans le programme compilé)
 LD0ED:
+        ; N° de la ligne recherchée
         sta     RES                             ; D0ED 85 00
         sty     RES+1                           ; D0EF 84 01
-        lda     ptr_07F9                        ; D0F1 AD F9 07
-        ldy     ptr_07F9+1                      ; D0F4 AC FA 07
+
+        ; Adresse de début du programme compilé
+        lda     PGMSTART                        ; D0F1 AD F9 07
+        ldy     PGMSTART+1                      ; D0F4 AC FA 07
         sta     ptr00BE                         ; D0F7 85 BE
         sty     ptr00BE+1                       ; D0F9 84 BF
+
+        ; Adresse de début du programme source
         lda     SCEDEB                          ; D0FB A5 5C
         ldy     SCEDEB+1                        ; D0FD A4 5D
         sty     ptr00C0+1                       ; D0FF 84 C1
 LD101:
         sta     ptr00C0                         ; D101 85 C0
+
+        ; Fin du programme source atteinte? -> LD136
         ldy     #$00                            ; D103 A0 00
         lda     (ptr00C0),y                     ; D105 B1 C0
         beq     LD136                           ; D107 F0 2D
 
+        ; Poids fort du n° de ligne cherchée < à celui de la ligne courante? ->LD137
         ldy     #$02                            ; D109 A0 02
         lda     RES+1                           ; D10B A5 01
         cmp     (ptr00C0),y                     ; D10D D1 C0
         bcc     LD137                           ; D10F 90 26
 
+        ; Poids fort du n° de ligne cherchée != de celui de la ligne courante? ->LD11C
         bne     LD11C                           ; D111 D0 09
 
+        ; Poids faible du n° de ligne cherchée < à celui de la ligne courante? ->LD137 (C=0)
         dey                                     ; D113 88
         lda     RES                             ; D114 A5 00
         cmp     (ptr00C0),y                     ; D116 D1 C0
         bcc     LD137                           ; D118 90 1D
 
+        ; On a trouvé la ligne -> LD137 (ici C=1)
         beq     LD137                           ; D11A F0 1B
 
 LD11C:
+        ; Ajoute la longueur du code compilé de la ligne à ptr00BE
         clc                                     ; D11C 18
         ldy     #$03                            ; D11D A0 03
         lda     (ptr00C0),y                     ; D11F B1 C0
@@ -3983,6 +4363,8 @@ LD11C:
         clc                                     ; D129 18
 
 LD12A:
+        ; Ajoute la longueur de la ligne source au pointeur ptr00C0 et boucle
+        ; (ie: passe à la ligne suivante dans le code source)
         ldy     #$00                            ; D12A A0 00
         lda     ptr00C0                         ; D12C A5 C0
         adc     (ptr00C0),y                     ; D12E 71 C0
@@ -4096,7 +4478,7 @@ Error_X:
 
         ; ON ERROR GOTO actif?
         lda     fFlags                          ; D195 A5 8C
-        and     #$04                            ; D197 29 04
+        and     #%00000100                      ; D197 29 04
         bne     LD1CC                           ; D199 D0 31
 
 LD19B:
@@ -4170,6 +4552,7 @@ LD1EA:
 LD1F4:
         ldx     #$08                            ; D1F4 A2 08
         .byte   $2C                             ; D1F6 2C
+
 LD1F7:
         ldx     #$00                            ; D1F7 A2 00
         lda     VARTYP                          ; D1F9 A5 BA
@@ -4306,19 +4689,26 @@ LD28E:
         rts                                     ; D28E 60
 
 ; ----------------------------------------------------------------------------
+; Affectation
 LD28F:
+        ; 3 octets à copier (pour la boucle en LD2C5)
         ldy     #$03                            ; D28F A0 03
         sty     RES                             ; D291 84 00
+
         lda     VARTYP                          ; D293 A5 BA
         sta     ($BC),y                         ; D295 91 BC
+
         dey                                     ; D297 88
         lda     ($BC),y                         ; D298 B1 BC
+        ; Variable de type alpha?
         cmp     #$08                            ; D29A C9 08
         beq     LD2D7                           ; D29C F0 39
 
+        ; Variable de type tableau alpha?
         cmp     #$0C                            ; D29E C9 0C
         beq     LD2D7                           ; D2A0 F0 35
 
+        ; Variable de type tableau numérique?
         cmp     #$0D                            ; D2A2 C9 0D
         bne     LD2A9                           ; D2A4 D0 03
 
@@ -4331,17 +4721,24 @@ LD2A9:
         beq     LD2C1                           ; D2AD F0 12
 
         jsr     LD2EB                           ; D2AF 20 EB D2
+
+        ; 5 octets à copier (pour la boucle en LD2C5)
         lda     #$05                            ; D2B2 A9 05
         sta     RES                             ; D2B4 85 00
+
         lda     FACC1S                          ; D2B6 A5 65
         ora     #$7F                            ; D2B8 09 7F
         and     FACC1M                          ; D2BA 25 61
         sta     FACC1M                          ; D2BC 85 61
+
 LD2BE:
         ldx     #$00                            ; D2BE A2 00
         .byte   $2C                             ; D2C0 2C
+
 LD2C1:
         ldx     #$01                            ; D2C1 A2 01
+
+        ; Boucle de copie de FACC1 vers ($C4)
         ldy     #$00                            ; D2C3 A0 00
 LD2C5:
         lda     FACC1E,x                        ; D2C5 B5 60
@@ -4360,11 +4757,15 @@ Error_EXPRTYP:
         jmp     Error_X                         ; D2D4 4C 7E D1
 
 ; ----------------------------------------------------------------------------
+; Affectation pour une variable alpha
 LD2D7:
+        ; Vartyp = alpha?
         lda     VARTYP                          ; D2D7 A5 BA
         bpl     Error_EXPRTYP                   ; D2D9 10 F7
 
+        ; Copie de 3 octets de FACC1 vers ($C4)
         jsr     LD2BE                           ; D2DB 20 BE D2
+
         lda     ptr_07F7+1                      ; D2DE AD F8 07
         sbc     ptr_07F5+1                      ; D2E1 ED F6 07
         cmp     #$02                            ; D2E4 C9 02
@@ -5318,35 +5719,52 @@ hyperbas_signature:
 
 ; ----------------------------------------------------------------------------
 ; Début Passe Ia
+; On marque les tableaux et les labels comme non
+; définis
 Passe_Ia:
         ldx     #$0A                            ; D8A0 A2 0A
         jsr     PrintPasse_X                    ; D8A2 20 6B DF
 
-        lda     L07FD                           ; D8A5 AD FD 07
-        ldx     L07FD+1                         ; D8A8 AE FE 07
+        ; Adresse de début des variables
+        lda     VARBOT                          ; D8A5 AD FD 07
+        ldx     VARBOT+1                        ; D8A8 AE FE 07
+
 LD8AB:
         sta     $92                             ; D8AB 85 92
         stx     $93                             ; D8AD 86 93
+
+        ; Dernière variable atteinte? -> Passe_Ib
         ldy     #$01                            ; D8AF A0 01
         lda     ($92),y                         ; D8B1 B1 92
         beq     Passe_Ib                        ; D8B3 F0 22
 
         iny                                     ; D8B5 C8
         lda     ($92),y                         ; D8B6 B1 92
+
+        ; Variable de type label?
         cmp     #$06                            ; D8B8 C9 06
         beq     LD8C4                           ; D8BA F0 08
 
+        ; Type variable alpha/numérique? -> LD8C9
         cmp     #$0C                            ; D8BC C9 0C
         bcc     LD8C9                           ; D8BE 90 09
 
+        ; Type constante? -> LD8C9
         cmp     #$0E                            ; D8C0 C9 0E
         bcs     LD8C9                           ; D8C2 B0 05
 
 LD8C4:
+        ; Ici variable de type label ($06),
+        ; tableau alpha ($0C), tableau numérique ($0D)
+        ; On place un $03 dans le second octet du type
+        ; pour indiquer que le label n'est pas
+        ; défini ou que le tableau n'est pas dimensioné
         iny                                     ; D8C4 C8
         lda     #$03                            ; D8C5 A9 03
         sta     ($92),y                         ; D8C7 91 92
+
 LD8C9:
+        ; On passe à la variable suivante
         ldy     #$01                            ; D8C9 A0 01
         lda     ($92),y                         ; D8CB B1 92
         tax                                     ; D8CD AA
@@ -5360,9 +5778,12 @@ LD8D4:
 
 ; ----------------------------------------------------------------------------
 ; Début Passe Ib
+; Traite les instructions "DIM"
 Passe_Ib:
         ldx     #$0B                            ; D8D7 A2 0B
         jsr     PrintPasse_X                    ; D8D9 20 6B DF
+
+        ; Adresse de début du programme source
         lda     SCEDEB                          ; D8DC A5 5C
         ldx     SCEDEB+1                        ; D8DE A6 5D
         stx     TR1                             ; D8E0 86 0D
@@ -5374,19 +5795,25 @@ LD8E2:
         lda     (TR0),y                         ; D8E6 B1 0C
         beq     LD8D4                           ; D8E8 F0 EA
 
+        ; Prend le 1er token de la ligne
         ldy     #$04                            ; D8EA A0 04
         lda     (TR0),y                         ; D8EC B1 0C
         beq     LD91C                           ; D8EE F0 2C
 
+        ; Token $C0?
         cmp     #$C0                            ; D8F0 C9 C0
         bne     LD95D                           ; D8F2 D0 69
 
+        ; Oui, on teste l'octet suivant
         iny                                     ; D8F4 C8
         lda     (TR0),y                         ; D8F5 B1 0C
+        ; Instruction "DIM"? non -> LD95D (ligne suivante)
         cmp     #$CC                            ; D8F7 C9 CC
         bne     LD95D                           ; D8F9 D0 62
 
         ; Cherche le type du token pointé par (TR0),Y
+        ; Il s'agit de la variable de la dimension
+        ; du tableau
         ldy     #$09                            ; D8FB A0 09
         jsr     LD96C                           ; D8FD 20 6C D9
 
@@ -5427,9 +5854,12 @@ LD91C:
         ldx     #$07                            ; D926 A2 07
         jsr     PrintErrMsg3                    ; D928 20 8D D5
 
+        ; Récupère l'offset vers la fin du nom du label
         ldy     #$06                            ; D92B A0 06
         lda     ($92),y                         ; D92D B1 92
         sta     RESB                            ; D92F 85 02
+
+        ; Boucle d'affichage du nom du label
 LD931:
         iny                                     ; D931 C8
         cpy     RESB                            ; D932 C4 02
@@ -5446,25 +5876,35 @@ LD93D:
         jsr     PrintErrMsg3                    ; D93F 20 8D D5
 
 LD942:
+        ; Empile le n° de la ligne courante
         ldy     #$02                            ; D942 A0 02
         lda     (TR0),y                         ; D944 B1 0C
         pha                                     ; D946 48
         dey                                     ; D947 88
         lda     (TR0),y                         ; D948 B1 0C
         pha                                     ; D94A 48
+
+
 LD94B:
+        ; Indique label défini
         ldy     #$03                            ; D94B A0 03
         lda     #$00                            ; D94D A9 00
         sta     ($92),y                         ; D94F 91 92
+
+        ; Récupère l'offset vers la valeur du label
         ldy     #$06                            ; D951 A0 06
         lda     ($92),y                         ; D953 B1 92
         tay                                     ; D955 A8
+
+        ; Met à jour le n° de ligne de ce label
         pla                                     ; D956 68
         sta     ($92),y                         ; D957 91 92
         iny                                     ; D959 C8
         pla                                     ; D95A 68
         sta     ($92),y                         ; D95B 91 92
+
 LD95D:
+        ; On passe à la ligne suivante
         clc                                     ; D95D 18
         ldy     #$00                            ; D95E A0 00
         lda     (TR0),y                         ; D960 B1 0C
@@ -5517,7 +5957,12 @@ LD985:
 
         ; Erreur: ' absent'
         ldx     #$06                            ; D98D A2 06
-        bit     $04A2                           ; D98F 2C A2 04
+        ; Masque l'instruction suivante
+        .byte   $2C                             ; D98F 2C
+
+        ; Erreur: '? mode'
+        ; /?\ il ne semble pas y avoir d'appel vers $D990
+        ldx     #$04                            ; D990 A2 04
 
         ; Force b7 de $B5 à 1
         sec                                     ; D992 38
@@ -5526,46 +5971,71 @@ LD985:
 
 ; ----------------------------------------------------------------------------
 ; Début Passe Ic
+;    Mise à jour des variables de type Ligne ou Label avec l'adresse d'exécution
+;         de la ligne
+;    Initialisation des tableaux
 Passe_Ic:
         ldx     #$0C                            ; D998 A2 0C
         jsr     PrintPasse_X                    ; D99A 20 6B DF
-        ldx     L07FD                           ; D99D AE FD 07
-        lda     L07FD+1                         ; D9A0 AD FE 07
+
+        ; Adresse de début des variables
+        ldx     VARBOT                          ; D99D AE FD 07
+        lda     VARBOT+1                        ; D9A0 AD FE 07
+
 LD9A3:
         stx     TR0                             ; D9A3 86 0C
         sta     TR1                             ; D9A5 85 0D
+
+        ; Fin des variables atteintes? -> Fin
         ldy     #$01                            ; D9A7 A0 01
         lda     (TR0),y                         ; D9A9 B1 0C
         beq     LD96B                           ; D9AB F0 BE
 
         iny                                     ; D9AD C8
         lda     (TR0),y                         ; D9AE B1 0C
+
+        ; Type n° de ligne?
         cmp     #$07                            ; D9B0 C9 07
         beq     LD9D0                           ; D9B2 F0 1C
 
+        ; Type label?
         cmp     #$06                            ; D9B4 C9 06
         beq     LD9C9                           ; D9B6 F0 11
 
+        ; Type variable alpha/numérique? -> variable suivante
         cmp     #$0C                            ; D9B8 C9 0C
         bcc     LD9F8                           ; D9BA 90 3C
 
+        ; Type constante? -> variable suivante
         cmp     #$0E                            ; D9BC C9 0E
         bcs     LD9F8                           ; D9BE B0 38
 
+        ; Ici type tableau alpha ($0C) ou numérique ($0D)
+        ; on l'initialise à sa dimension
         jsr     LCF81                           ; D9C0 20 81 CF
+
         jsr     LCAEE                           ; D9C3 20 EE CA
+
+        ; On passe à la variable suivante
         jmp     LD9F8                           ; D9C6 4C F8 D9
 
 ; ----------------------------------------------------------------------------
+; Variable de type label
 LD9C9:
         iny                                     ; D9C9 C8
         lda     (TR0),y                         ; D9CA B1 0C
+
+        ; Label non défini? -> LD9F8
         cmp     #$03                            ; D9CC C9 03
         beq     LD9F8                           ; D9CE F0 28
 
+; Variable de type Ligne ou label
 LD9D0:
+        ; Place l'offset vers la valeur dans Y
         ldy     #$06                            ; D9D0 A0 06
         lda     (TR0),y                         ; D9D2 B1 0C
+
+        ; Place dans AY le n° de la ligne (en binaire)
         tay                                     ; D9D4 A8
         lda     (TR0),y                         ; D9D5 B1 0C
         pha                                     ; D9D7 48
@@ -5573,6 +6043,7 @@ LD9D0:
         lda     (TR0),y                         ; D9D9 B1 0C
         tay                                     ; D9DB A8
         pla                                     ; D9DC 68
+        ; Recherche les adresses d'exécution et source de la ligne (AY) du programme
         jsr     LD0ED                           ; D9DD 20 ED D0
         bcs     LD9E8                           ; D9E0 B0 06
 
@@ -5582,18 +6053,26 @@ LD9D0:
         jmp     LD9F8                           ; D9E5 4C F8 D9
 
 ; ----------------------------------------------------------------------------
+; Label ou n° de ligne trouvé dans le source
+; on met à jour l'adresse d'exécution dans la variable
 LD9E8:
+        ; Place dans Y l'offset vers la valeur de la variable
         ldy     #$06                            ; D9E8 A0 06
         lda     (TR0),y                         ; D9EA B1 0C
         tay                                     ; D9EC A8
+        ; +2
         iny                                     ; D9ED C8
         iny                                     ; D9EE C8
+
+        ; Place l'adresse d'exécution de la ligne dans la variable
         lda     ptr00BE                         ; D9EF A5 BE
         sta     (TR0),y                         ; D9F1 91 0C
         iny                                     ; D9F3 C8
         lda     ptr00BE+1                       ; D9F4 A5 BF
         sta     (TR0),y                         ; D9F6 91 0C
+
 LD9F8:
+        ; On passe à la variable suivante
         ldy     #$00                            ; D9F8 A0 00
         lda     (TR0),y                         ; D9FA B1 0C
         tax                                     ; D9FC AA
@@ -5612,43 +6091,60 @@ LDA03:
         lsr     $B5                             ; DA08 46 B5
 
         ldy     #$00                            ; DA0A A0 00
-        sty     ptr_07F9                        ; DA0C 8C F9 07
-        sty     ptr_07F9+1                      ; DA0F 8C FA 07
+        sty     PGMSTART                        ; DA0C 8C F9 07
+        sty     PGMSTART+1                      ; DA0F 8C FA 07
+
+        ; AY = $FFFF
         dey                                     ; DA12 88
         tya                                     ; DA13 98
+        ; Recherche les adresses d'exécution et source de la ligne (AY) du programme
+        ; ici il s'agit de la dernière ligne du programme
         jsr     LD0ED                           ; DA14 20 ED D0
+
+        ; Calcule l'adresse de début du programme compilé
         clc                                     ; DA17 18
         lda     HIMEM_val                       ; DA18 AD FB 07
         sbc     ptr00BE                         ; DA1B E5 BE
-        sta     ptr_07F9                        ; DA1D 8D F9 07
+        sta     PGMSTART                        ; DA1D 8D F9 07
         sta     $07B5                           ; DA20 8D B5 07
         tax                                     ; DA23 AA
         lda     HIMEM_val+1                     ; DA24 AD FC 07
         sbc     ptr00BE+1                       ; DA27 E5 BF
         sbc     #$01                            ; DA29 E9 01
-        sta     ptr_07F9+1                      ; DA2B 8D FA 07
+        sta     PGMSTART+1                      ; DA2B 8D FA 07
         sta     $07B6                           ; DA2E 8D B6 07
+
+        ; Exécution des passes Ia, Ib & Ic
         jsr     Passe_Ia                        ; DA31 20 A0 D8
 
         lda     #$00                            ; DA34 A9 00
         sta     SP                              ; DA36 8D 00 07
+
         lda     #$FD                            ; DA39 A9 FD
         ldy     #$05                            ; DA3B A0 05
         sta     ptr00C0                         ; DA3D 85 C0
         sty     ptr00C0+1                       ; DA3F 84 C1
+
         lda     SCEFIN                          ; DA41 A5 5E
         ldy     SCEFIN+1                        ; DA43 A4 5F
         sta     ptr00BE                         ; DA45 85 BE
         sty     ptr00BE+1                       ; DA47 84 BF
+
+        ; N° de ligne en cours: $FFFF
         lda     #$FF                            ; DA49 A9 FF
         sta     TRACEPTR                        ; DA4B 85 99
         sta     TRACEPTR+1                      ; DA4D 85 9A
+
+        ; Traitement d'une ligne du programme source
         jsr     LDC07                           ; DA4F 20 07 DC
         jsr     LM_RTS                          ; DA52 20 B8 DA
+
         lda     ptr00BE                         ; DA55 A5 BE
         ldy     ptr00BE+1                       ; DA57 A4 BF
         sta     ptr_07F5                        ; DA59 8D F5 07
         sty     ptr_07F5+1                      ; DA5C 8C F6 07
+
+        ; Flag GRAB/RELEASE=1?
         bit     fFlags                          ; DA5F 24 8C
         bvs     LDAAE                           ; DA61 70 4B
 
@@ -5660,37 +6156,54 @@ Passe_II:
         ; CLEAR
         jsr     CLEAR                           ; DA68 20 A5 FD
 
-        lda     ptr_07F9                        ; DA6B AD F9 07
-        ldy     ptr_07F9+1                      ; DA6E AC FA 07
+        ; Adresse de début du programme compilé -> ptr00BE
+        lda     PGMSTART                        ; DA6B AD F9 07
+        ldy     PGMSTART+1                      ; DA6E AC FA 07
         sta     ptr00BE                         ; DA71 85 BE
         sty     ptr00BE+1                       ; DA73 84 BF
+
+        ; Adresse de début du programme source: $0800
         lda     #$00                            ; DA75 A9 00
         ldy     #$08                            ; DA77 A0 08
         sty     ptr00C0+1                       ; DA79 84 C1
+
 LDA7B:
+        ; Boucle de traitement du programme source
         sta     ptr00C0                         ; DA7B 85 C0
+
+        ; Fin du programme source atteinte?
         ldy     #$00                            ; DA7D A0 00
         lda     (ptr00C0),y                     ; DA7F B1 C0
         beq     LDAAE                           ; DA81 F0 2B
 
+        ; Sauvegarde la longueur de la ligne en cours
         sta     $C3                             ; DA83 85 C3
+
+        ; Met à jour TRACEPTR avec le n° de la ligne courante
         iny                                     ; DA85 C8
         lda     (ptr00C0),y                     ; DA86 B1 C0
         sta     TRACEPTR                        ; DA88 85 99
         iny                                     ; DA8A C8
         lda     (ptr00C0),y                     ; DA8B B1 C0
         sta     TRACEPTR+1                      ; DA8D 85 9A
+
+        ; TALK OFF?
         bit     fTalk                           ; DA8F 24 8D
         bmi     LDAA0                           ; DA91 30 0D
 
+        ; Non, affiche le n° de la ligne en cours de compilation
         lda     #$0D                            ; DA93 A9 0D
        _XWR0                                    ; DA95 00 10
         lda     TRACEPTR                        ; DA97 A5 99
         ldy     TRACEPTR+1                      ; DA99 A4 9A
         jsr     LD559                           ; DA9B 20 59 D5
        _XWSTR0                                  ; DA9E 00 14
+
 LDAA0:
+        ; Traitement d'une ligne du programme source
         jsr     LDC07                           ; DAA0 20 07 DC
+
+        ; Passe à la ligne suivante du programme source
         clc                                     ; DAA3 18
         lda     $C3                             ; DAA4 A5 C3
         adc     ptr00C0                         ; DAA6 65 C0
@@ -5698,14 +6211,16 @@ LDAA0:
         inc     ptr00C0+1                       ; DAAA E6 C1
         bcs     LDA7B                           ; DAAC B0 CD
 
+; ----------------------------------------------------------------------------
+; Fin de la compilation
 LDAAE:
-        ; b7=1? ->
+        ; Erreur pendant la compilation? (b7=1)
         bit     $B5                             ; DAAE 24 B5
         bmi     LDABD                           ; DAB0 30 0B
 
-        ; Force TRACE SET
+        ; Force b6=1 (RELEASE/GRAB)
         lda     fFlags                          ; DAB2 A5 8C
-        ora     #$40                            ; DAB4 09 40
+        ora     #%01000000                      ; DAB4 09 40
         sta     fFlags                          ; DAB6 85 8C
 
 ; Ajoute RTS au programme LM
@@ -5714,14 +6229,15 @@ LM_RTS:
         jmp     LM_Put_A                        ; DABA 4C 5C DF
 
 ; ----------------------------------------------------------------------------
+; Il y a eut une erreur pendant la compilation
 ; Place un RTS au début du programme compilé
 LDABD:
-        lda     ptr_07F9                        ; DABD AD F9 07
-        ldy     ptr_07F9+1                      ; DAC0 AC FA 07
+        lda     PGMSTART                        ; DABD AD F9 07
+        ldy     PGMSTART+1                      ; DAC0 AC FA 07
         sta     RES                             ; DAC3 85 00
         sty     RES+1                           ; DAC5 84 01
         ldy     #$00                            ; DAC7 A0 00
-        lda     #$60                            ; DAC9 A9 60
+        lda     #I_RTS                          ; DAC9 A9 60
         sta     (RES),y                         ; DACB 91 00
 LDACD:
         rts                                     ; DACD 60
@@ -5970,9 +6486,13 @@ LDC04:
         jmp     LDADA                           ; DC04 4C DA DA
 
 ; ----------------------------------------------------------------------------
+; Traitement d'une ligne du programme source
 LDC07:
         ldy     #$03                            ; DC07 A0 03
         sty     TXTPTR                          ; DC09 84 C4
+
+        ; Sauvegarde ptr00BE en $B6-B7
+        ; Calcule $B1-B2 = ptr00BE + longueur de la ligne
         clc                                     ; DC0B 18
         lda     ptr00BE                         ; DC0C A5 BE
         sta     $B6                             ; DC0E 85 B6
@@ -5982,27 +6502,39 @@ LDC07:
         sta     $B7                             ; DC16 85 B7
         adc     #$00                            ; DC18 69 00
         sta     $B2                             ; DC1A 85 B2
+
+        ; Force b7 de $B0 à 0
         lsr     $B0                             ; DC1C 46 B0
+
+        ; Token de la première instruction
         ldy     #$04                            ; DC1E A0 04
         lda     (ptr00C0),y                     ; DC20 B1 C0
+
+        ; Token = $C0?
         cmp     #$C0                            ; DC22 C9 C0
         bne     LDC2E                           ; DC24 D0 08
 
+        ; Token2 de l'instruction
         iny                                     ; DC26 C8
         lda     (ptr00C0),y                     ; DC27 B1 C0
+
+        ; $CC = TOKEN_DIM
         cmp     #$CC                            ; DC29 C9 CC
         bne     LDC2E                           ; DC2B D0 01
 
+        ; Instruction DIM rencontrée
         rts                                     ; DC2D 60
 
 ; ----------------------------------------------------------------------------
 LDC2E:
         lda     #$00                            ; DC2E A9 00
         pha                                     ; DC30 48
+
+        ; Charge le token de l'instruction dans ACC
         ldy     #$04                            ; DC31 A0 04
         lda     (ptr00C0),y                     ; DC33 B1 C0
 
-        ; Test de ACC -> Z=0 si ACC € [$00, $09, $0F, $10, $05, $A0, $A1, $A3]
+        ; Token dans la liste ], REPEAT, UNCOUNT, WEND, ', REM, GOTO, CLS ?
         jsr     LDF9A                           ; DC35 20 9A DF
         beq     LDC48                           ; DC38 F0 0E
 
@@ -6011,11 +6543,13 @@ LDC2E:
         ldy     #>TraceLine                     ; DC3C A0 D5
         jsr     LM_JSR_XY                       ; DC3E 20 52 DF
 
+        ; Compile TRACEPTR (contient ici le n° de ligne)
         ldx     TRACEPTR                        ; DC41 A6 99
         ldy     TRACEPTR+1                      ; DC43 A4 9A
         jsr     LDF57                           ; DC45 20 57 DF
 
 LDC48:
+        ; Fin de la ligne atteinte?
         inc     TXTPTR                          ; DC48 E6 C4
         lda     TXTPTR                          ; DC4A A5 C4
         cmp     $C3                             ; DC4C C5 C3
@@ -6026,11 +6560,14 @@ LDC48:
         cmp     #$20                            ; DC54 C9 20
         beq     LDC04                           ; DC56 F0 AC
 
+        ; Token >= $80?
         tax                                     ; DC58 AA
         bmi     LDC60                           ; DC59 30 05
 
+        ; Token >= $20?
         bcs     LDC63                           ; DC5B B0 06
 
+        ; Token < $20
         jmp     LDDB6                           ; DC5D 4C B6 DD
 
 ; ----------------------------------------------------------------------------
@@ -6171,6 +6708,7 @@ LDCED:
 
 ; ----------------------------------------------------------------------------
 LDCF0:
+        ; Token >= $C0?
         cmp     #$C0                            ; DCF0 C9 C0
         bcs     LDCED                           ; DCF2 B0 F9
 
@@ -6186,10 +6724,13 @@ LDCF0:
 
         ; Code 'CLC'
         lda     #I_CLC                          ; DCFE A9 18
+        ; Masque l'instruction suivante
         .byte   $2C                             ; DD00 2C
+
 LDD01:
         ; Code 'SEC'
         lda     #I_SEC                          ; DD01 A9 38
+
         jsr     LM_Put_A                        ; DD03 20 5C DF
 
         jmp     LDC48                           ; DD06 4C 48 DC
@@ -6214,7 +6755,7 @@ LDD0D:
 
         jmp     LDD0D                           ; DD19 4C 0D DD
 
-; ----------------------------------------------------------------------------
+        ; ----------------------------------------------------------------------------
 LDD1C:
         pha                                     ; DD1C 48
         lda     ptr00BE                         ; DD1D A5 BE
@@ -6243,7 +6784,7 @@ LDD2C:
 
         jmp     LDD2C                           ; DD38 4C 2C DD
 
-; ----------------------------------------------------------------------------
+        ; ----------------------------------------------------------------------------
 LDD3B:
         pha                                     ; DD3B 48
         ldy     #$00                            ; DD3C A0 00
@@ -6284,7 +6825,7 @@ LDD51:
 LDD76:
         jmp     LDC48                           ; DD76 4C 48 DC
 
-; ----------------------------------------------------------------------------
+        ; ----------------------------------------------------------------------------
 LDD79:
         ; Code 'NOP'
         lda     #I_NOP                          ; DD79 A9 EA
@@ -6297,7 +6838,7 @@ LDD84:
         jsr     LM_Put_A                        ; DD86 20 5C DF
         jmp     LDDF6                           ; DD89 4C F6 DD
 
-; ----------------------------------------------------------------------------
+        ; ----------------------------------------------------------------------------
 LDD8C:
         ldx     #<LD51E                         ; DD8C A2 1E
         ldy     #>LD51E                         ; DD8E A0 D5
@@ -6325,10 +6866,10 @@ LDD9A:
 
         jmp     LDD9A                           ; DDA8 4C 9A DD
 
-; ----------------------------------------------------------------------------
+        ; ----------------------------------------------------------------------------
 LDDAB:
         pha                                     ; DDAB 48
-        ; Compile 'JSR $E048'
+        ; Compile 'JSR LE048'
         ldx     #<LE048                         ; DDAC A2 48
         ldy     #>LE048                         ; DDAE A0 E0
         jsr     LM_JSR_XY                       ; DDB0 20 52 DF
@@ -6337,25 +6878,33 @@ LDDAB:
 
 ; ----------------------------------------------------------------------------
 LDDB6:
+        ; Token < $C0?
         sta     $96                             ; DDB6 85 96
         cmp     #$C0                            ; DDB8 C9 C0
         bcc     LDDC2                           ; DDBA 90 06
 
+        ; Non, on prend aussi le token2 pour le
+        ; mettre dans $97
         iny                                     ; DDBC C8
         inc     TXTPTR                          ; DDBD E6 C4
         lda     (ptr00C0),y                     ; DDBF B1 C0
+
+        ; Masque l'instruction suivante
         .byte   $2C                             ; DDC1 2C
 
 LDDC2:
+        ; Token < $C0, on met $00 dans $97
         lda     #$00                            ; DDC2 A9 00
 
         sta     $97                             ; DDC4 85 97
         ; Cherche le type du token contenu en $96-97
         jsr     LCA8A                           ; DDC6 20 8A CA
 
+        ; Type 1?
         cmp     #$01                            ; DDC9 C9 01
         bne     LDE20                           ; DDCB D0 53
 
+        ; Oui
         tax                                     ; DDCD AA
         lda     $96                             ; DDCE A5 96
         beq     LDE19                           ; DDD0 F0 47
@@ -6395,6 +6944,7 @@ LDDE4:
         jsr     LCA8A                           ; DDF3 20 8A CA
 
 LDDF6:
+        ; Label défini?
         ldy     #$03                            ; DDF6 A0 03
         lda     ($92),y                         ; DDF8 B1 92
         beq     LDE07                           ; DDFA F0 0B
@@ -6407,6 +6957,8 @@ LDDF6:
         jsr     LD978                           ; DE04 20 78 D9
 
 LDE07:
+        ; Compile l'adresse de la routine correspondante
+        ; au label
         ldy     #$06                            ; DE07 A0 06
         lda     ($92),y                         ; DE09 B1 92
         tay                                     ; DE0B A8
@@ -6425,43 +6977,59 @@ LDE19:
 
 ; ----------------------------------------------------------------------------
 LDE20:
+        ; Variable label?
         cmp     #$06                            ; DE20 C9 06
         bne     LDE61                           ; DE22 D0 3D
 
+        ; Label défini? oui -> LDE35
         cpx     #$03                            ; DE24 E0 03
         bne     LDE35                           ; DE26 D0 0D
 
+        ; Compile JSR LD368 (accès à une variable)
         jsr     LM_JSR_D368_Ptr92               ; DE28 20 42 DF
 
-        ; Compile JSR $F542
+        ; Compile JSR LF542 (vérification d'un nom de fichier & chargement)
         ldx     #<LF542                         ; DE2B A2 42
         ldy     #>LF542                         ; DE2D A0 F5
         jsr     LM_JSR_XY                       ; DE2F 20 52 DF
 
+        ; Traitement token suivant
         jmp     LDC48                           ; DE32 4C 48 DC
 
-; ----------------------------------------------------------------------------
+        ; ----------------------------------------------------------------------------
+        ; Compile GOSUB label
 LDE35:
+        ; Compile l'appel vers la routine de vérification
+        ; de la pile GOSUB
         ldx     #<LE8CB                         ; DE35 A2 CB
         ldy     #>LE8CB                         ; DE37 A0 E8
         jsr     LM_JSR_XY                       ; DE39 20 52 DF
+
+        ; Compile un JSR
         lda     #I_JSR                          ; DE3C A9 20
         jsr     LM_Put_A                        ; DE3E 20 5C DF
+
+        ; Place l'offset vers l'adresse du label dans Y
         ldy     #$06                            ; DE41 A0 06
         lda     ($92),y                         ; DE43 B1 92
         tay                                     ; DE45 A8
         iny                                     ; DE46 C8
         iny                                     ; DE47 C8
+
+        ; Compile l'adresse du label
         lda     ($92),y                         ; DE48 B1 92
         jsr     LM_Put_A                        ; DE4A 20 5C DF
         iny                                     ; DE4D C8
         lda     ($92),y                         ; DE4E B1 92
         jsr     LM_Put_A                        ; DE50 20 5C DF
+
+        ; /?\ Compile 2 NOP
         lda     #I_NOP                          ; DE53 A9 EA
         jsr     LM_Put_A                        ; DE55 20 5C DF
         jsr     LM_Put_A                        ; DE58 20 5C DF
 
 LDE5B:
+        ; Traitement token suivant
         jmp     LDC48                           ; DE5B 4C 48 DC
 
 ; ----------------------------------------------------------------------------
@@ -6470,24 +7038,31 @@ LDE5E:
 
 ; ----------------------------------------------------------------------------
 LDE61:
+        ; Variable tableau alpha?
         cmp     #$0C                            ; DE61 C9 0C
         beq     LDE9A                           ; DE63 F0 35
 
+        ; Variable tableau numérique?
         cmp     #$0D                            ; DE65 C9 0D
         beq     LDE9A                           ; DE67 F0 31
 
+        ; Constante alpha?
         cmp     #$10                            ; DE69 C9 10
         bcs     LDE9A                           ; DE6B B0 2D
 
+        ; Variable n° de ligne?
         cmp     #$07                            ; DE6D C9 07
         beq     LDE9A                           ; DE6F F0 29
 
+        ; Variable numérique?
         cmp     #$09                            ; DE71 C9 09
         beq     LDE79                           ; DE73 F0 04
 
+        ; Variable alpha?
         cmp     #$08                            ; DE75 C9 08
         bne     LDE5E                           ; DE77 D0 E5
 
+; Ici, variable numérique ou alpha
 LDE79:
         ldy     TXTPTR                          ; DE79 A4 C4
         dey                                     ; DE7B 88
@@ -6513,10 +7088,14 @@ LDE90:
         jmp     LDC48                           ; DE97 4C 48 DC
 
 ; ----------------------------------------------------------------------------
+; Ici tableau alpha/numérique, constante alpha, n° de ligne
 LDE9A:
+        ; Force b7 de $91 à 0
         clc                                     ; DE9A 18
+
 LDE9B:
         ror     $91                             ; DE9B 66 91
+
 LDE9D:
         pla                                     ; DE9D 68
         pha                                     ; DE9E 48
@@ -6558,10 +7137,13 @@ LDED8:
         bit     $91                             ; DED8 24 91
         bmi     LDEF8                           ; DEDA 30 1C
 
+        ; Variable de type $02?
         ldy     #$02                            ; DEDC A0 02
         lda     ($92),y                         ; DEDE B1 92
         cmp     #$02                            ; DEE0 C9 02
         bne     LDEEA                           ; DEE2 D0 06
+
+        ; Ici, variable de type $02
 
         ; Ajoute une routine ou un saut vers la routine de l'instruction
         ; définition de la routine en ($92-$93)
@@ -6571,13 +7153,19 @@ LDED8:
 
 ; ----------------------------------------------------------------------------
 LDEEA:
+        ; Variable de type tableau alpha?
         cmp     #$0C                            ; DEEA C9 0C
         beq     LDEFC                           ; DEEC F0 0E
 
+        ; Variable de type tableau numérique?
         cmp     #$0D                            ; DEEE C9 0D
         beq     LDEFC                           ; DEF0 F0 0A
 
+        ; Compile
+        ;    jsr LD368
+        ;    .word xxxx
         jsr     LM_JSR_D368_Ptr92               ; DEF2 20 42 DF
+
         jmp     LDC48                           ; DEF5 4C 48 DC
 
 ; ----------------------------------------------------------------------------
@@ -6585,24 +7173,33 @@ LDEF8:
         ldx     #$02                            ; DEF8 A2 02
         bne     LDF18                           ; DEFA D0 1C
 
-; Compile JSR $D05F
+; ----------------------------------------------------------------------------
 LDEFC:
+        ; Compile:
+        ;    jsr $D05F
+        ;    .word xxxxx
         ldx     #<LD05F                         ; DEFC A2 5F
         ldy     #>LD05F                         ; DEFE A0 D0
         jsr     LM_JSR_XY_Ptr92                 ; DF00 20 46 DF
+
         jmp     LDC48                           ; DF03 4C 48 DC
 
 ; ----------------------------------------------------------------------------
 LDF06:
+        ; Variable type != $02? -> LDF10
         cmp     #$02                            ; DF06 C9 02
         bne     LDF10                           ; DF08 D0 06
 
+        ; Variable sous type >= $02? -> LDE9B
         cpx     #$02                            ; DF0A E0 02
         bcs     LDE9B                           ; DF0C B0 8D
 
+        ; Ici variable de type $02 et sous type < $02
         bcc     LDE9A                           ; DF0E 90 8A
 
+        ; ----------------------------------------------------------------------------
 LDF10:
+        ; Variable de type $03?
         cmp     #$03                            ; DF10 C9 03
         beq     LDF18                           ; DF12 F0 04
 
@@ -6668,6 +7265,7 @@ LM_JSR_XY_Ptr92:
 LM_JSR_XY:
         lda     #I_JSR                          ; DF52 A9 20
         jsr     LM_Put_A                        ; DF54 20 5C DF
+
 LDF57:
         txa                                     ; DF57 8A
         jsr     LM_Put_A                        ; DF58 20 5C DF
@@ -6730,29 +7328,44 @@ EQPop:
         rts                                     ; DF99 60
 
 ; ----------------------------------------------------------------------------
-; Test de ACC -> Z=0 si ACC € [$00, $09, $0F, $10, $05, $A0, $A1, $A3]
+; Teste un token
+;     Test de ACC -> Z=1 si ACC € [$00, $09, $0F, $10, $05, $A0, $A1, $A3]
+;
+; Entrée:
+;    ACC: Token
+;
+; Sortie:
+;    Z: 1 si le token est dans la liste ], REPEAT, UNCOUNT, WEND, ', REM, GOTO, CLS
 LDF9A:
+        ; $00 = TOKEN_]
         cmp     #$00                            ; DF9A C9 00
         beq     LDFB8                           ; DF9C F0 1A
 
+        ; $09 = TOKEN_REPEAT
         cmp     #$09                            ; DF9E C9 09
         beq     LDFB8                           ; DFA0 F0 16
 
+        ; $0F = TOKEN_UNCOUNT
         cmp     #$0F                            ; DFA2 C9 0F
         beq     LDFB8                           ; DFA4 F0 12
 
+        ; $10 = TOKEN_WEND
         cmp     #$10                            ; DFA6 C9 10
         beq     LDFB8                           ; DFA8 F0 0E
 
+        ; $05 = TOKEN_'
         cmp     #$05                            ; DFAA C9 05
         beq     LDFB8                           ; DFAC F0 0A
 
+        ; $A0 = TOKEN_REM
         cmp     #$A0                            ; DFAE C9 A0
         beq     LDFB8                           ; DFB0 F0 06
 
+        ; $A1 = TOKEN_GOTO
         cmp     #$A1                            ; DFB2 C9 A1
         beq     LDFB8                           ; DFB4 F0 02
 
+        ; $A3 = TOKEN_CLS
         cmp     #$A3                            ; DFB6 C9 A3
 LDFB8:
         rts                                     ; DFB8 60
@@ -6880,7 +7493,7 @@ FOR:
 ; ----------------------------------------------------------------------------
 LE040:
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$3A                            ; E040 A9 3A
         jsr     LCA69                           ; E042 20 69 CA
 LE045:
@@ -6918,7 +7531,7 @@ LE05C:
         ; ($FA = $100-6)
         ldy     #$FA                            ; E060 A0 FA
 LE062:
-        ; $FF66 = $10000-$FA+$60 = $10000-($100-6)+$60 = $FF00+6+60
+        ; $FF66 = $10000-$FA+$60 = $10000-($100-6)+$60 = $FF00+6+$60
         lda     LFF66,y                         ; E062 B9 66 FF
         jsr     Push                            ; E065 20 7B DF
         iny                                     ; E068 C8
@@ -7029,11 +7642,13 @@ NEXT:
         sta     $BD                             ; E0F3 85 BD
         cmp     (RESB),y                        ; E0F5 D1 02
         bne     Error_NEXT                      ; E0F7 D0 D9
+
         dey                                     ; E0F9 88
         lda     SP,x                            ; E0FA BD 00 07
         sta     $BC                             ; E0FD 85 BC
         cmp     (RESB),y                        ; E0FF D1 02
         bne     Error_NEXT                      ; E101 D0 CF
+
         ldy     #$03                            ; E103 A0 03
         lda     ($BC),y                         ; E105 B1 BC
         pha                                     ; E107 48
@@ -7049,6 +7664,7 @@ NEXT:
 LE119:
         pla                                     ; E119 68
         bne     LE135                           ; E11A D0 19
+
         sta     VARTYP                          ; E11C 85 BA
         ldy     #$00                            ; E11E A0 00
         lda     ($BC),y                         ; E120 B1 BC
@@ -7064,22 +7680,28 @@ LE119:
 LE135:
         lda     $06FF,x                         ; E135 BD FF 06
         bpl     LE18B                           ; E138 10 51
+
         ldy     #$01                            ; E13A A0 01
         lda     ($BC),y                         ; E13C B1 BC
         bmi     LE18B                           ; E13E 30 4B
+
         dey                                     ; E140 88
         sec                                     ; E141 38
         lda     ($BC),y                         ; E142 B1 BC
         sbc     #$81                            ; E144 E9 81
         bcc     LE18B                           ; E146 90 43
+
         iny                                     ; E148 C8
         cmp     #$08                            ; E149 C9 08
         bcc     LE155                           ; E14B 90 08
+
         iny                                     ; E14D C8
         sbc     #$10                            ; E14E E9 10
         bcs     LE18B                           ; E150 B0 39
+
         adc     #$08                            ; E152 69 08
         clc                                     ; E154 18
+
 LE155:
         tax                                     ; E155 AA
         lda     LE183,x                         ; E156 BD 83 E1
@@ -7087,13 +7709,16 @@ LE159:
         adc     ($BC),y                         ; E159 71 BC
         sta     ($BC),y                         ; E15B 91 BC
         bcc     LE164                           ; E15D 90 05
+
         lda     #$00                            ; E15F A9 00
         dey                                     ; E161 88
         bpl     LE159                           ; E162 10 F5
+
 LE164:
         ldy     #$01                            ; E164 A0 01
         lda     ($BC),y                         ; E166 B1 BC
         bpl     LE19D                           ; E168 10 33
+
         and     #$7F                            ; E16A 29 7F
         sta     ($BC),y                         ; E16C 91 BC
         dey                                     ; E16E 88
@@ -7647,19 +8272,33 @@ LE411:
 ; Ecrit CR/LF sur le canal (L07EB)
         jsr     LE50D                           ; E41D 20 0D E5                 Procédure
 
+; Sortie par défaut vers le canal 0
         jsr     LE4ED                           ; E420 20 ED E4                 Procédure $03
+
+; Ouvre la voie XRSS sur le canal 2
         jsr     LE4C9                           ; E423 20 C9 E4                 Procédure
+
+; Ouvre la voie XMDS sur le canal 2
         jsr     LE4CF                           ; E426 20 CF E4                 Procédure $04
+
+; Ouvre la voie XLPR sur le canal 2
         jsr     LE4D5                           ; E429 20 D5 E4                 Procédure
+
+; RTS
         jsr     LE4EC                           ; E42C 20 EC E4                 Procédure $05
+
         jsr     LC1F3                           ; E42F 20 F3 C1                 Procédure
         jsr     LD28F                           ; E432 20 8F D2                 Procédure
+
+; Initialise les variables DESALO/FISALO/EXSALO et FTYPE
+; pour un fichier source
         jsr     LF641                           ; E435 20 41 F6                 Procédure
+
         jsr     LF5E6                           ; E438 20 E6 F5                 Procédure $01
-        jsr     LF5FE                           ; E43B 20 FE F5                 Procédure $01
-        jsr     LF60A                           ; E43E 20 0A F6                 Procédure $01
-        jsr     LF619                           ; E441 20 19 F6                 Procédure $01
-        jsr     LF997                           ; E444 20 97 F9                 Procédure $01
+        jsr     Get_DESALO                      ; E43B 20 FE F5                 Procédure $01
+        jsr     Get_FISALO                      ; E43E 20 0A F6                 Procédure $01
+        jsr     Get_EXSALO                      ; E441 20 19 F6                 Procédure $01
+        jsr     _NOMFI+2                        ; E444 20 97 F9                 Procédure $01
         jsr     LE046                           ; E447 20 46 E0                 Procédure $01
         jsr     LEAF4                           ; E44A 20 F4 EA                 Procédure $01
         jsr     LEB0A                           ; E44D 20 0A EB                 Procédure $01
@@ -7672,7 +8311,7 @@ LE411:
         lda     #$00                            ; E45F A9 00                    Procédure $01
         sta     FACC1E                          ; E461 85 60
 
-        ; Place un XWR1
+        ; Sortie par défaut vers le canal 1
         lda     #XWR1                           ; E463 A9 11
         sta     L07EA+1                         ; E465 8D EB 07
 
@@ -7706,30 +8345,40 @@ LE4B9:
 
 ; ----------------------------------------------------------------------------
 LE4C9:
-        lda     #$90                            ; E4C9 A9 90
+        ; Voie XRSS (RS232 sortie)
+        lda     #XRSS                           ; E4C9 A9 90
         ldy     #$80                            ; E4CB A0 80
         bne     LE4D9                           ; E4CD D0 0A
+
 LE4CF:
-        lda     #$8F                            ; E4CF A9 8F
+        ; Voie XMDS (Minitel sortie)
+        lda     #XMDS                           ; E4CF A9 8F
         ldy     #$40                            ; E4D1 A0 40
         bne     LE4D9                           ; E4D3 D0 04
+
 LE4D5:
-        lda     #$8E                            ; E4D5 A9 8E
+        ; Voie XLPR (Centronic sortie)
+        lda     #XLPR                           ; E4D5 A9 8E
         ldy     #$C0                            ; E4D7 A0 C0
+
 LE4D9:
         sty     $9B                             ; E4D9 84 9B
         pha                                     ; E4DB 48
 
         ; L07EA: XWR2
+        ; Sortie vers le canal 2 par défaut
         lda     #XWR2                           ; E4DC A9 12
         sta     L07EA+1                         ; E4DE 8D EB 07
 
+        ; Désactive toutes les voies du canal 2
+        ; (b7=0)
         ldx     #$03                            ; E4E1 A2 03
 LE4E3:
         lsr     IOTAB2,x                        ; E4E3 5E B6 02
         dex                                     ; E4E6 CA
         bpl     LE4E3                           ; E4E7 10 FA
 
+        ; Ouvre le canal 2 vers la voie A
         pla                                     ; E4E9 68
        _XOP2                                    ; E4EA 00 02
 LE4EC:
@@ -7738,6 +8387,7 @@ LE4EC:
 ; ----------------------------------------------------------------------------
 LE4ED:
         ; L07EA: XWR0
+        ; Sortie vers le canal 0 par défaut
         lda     #XWR0                           ; E4ED A9 10
         sta     L07EA+1                         ; E4EF 8D EB 07
 
@@ -7758,7 +8408,7 @@ LE4F7:
         sta     $C3                             ; E507 85 C3
         rts                                     ; E509 60
 
-; ----------------------------------------------------------------------------
+        ; ----------------------------------------------------------------------------
 LE50A:
         jmp     Error_BADVAL                    ; E50A 4C FF F0
 
@@ -7795,7 +8445,7 @@ COS:
 ; ----------------------------------------------------------------------------
         .byte   $80,$83                         ; E535 80 83
 ; ----------------------------------------------------------------------------
-        lda     #$71                            ; E537 A9 71
+        lda     #XCOS                           ; E537 A9 71
         bne     TrigoFct                        ; E539 D0 5E
 
 ; ----------------------------------------------------------------------------
@@ -7810,7 +8460,7 @@ SIN:
 ; ----------------------------------------------------------------------------
         .byte   $80,$83                         ; E545 80 83
 ; ----------------------------------------------------------------------------
-        lda     #$70                            ; E547 A9 70
+        lda     #XSIN                           ; E547 A9 70
         bne     TrigoFct                        ; E549 D0 4E
 
 ; ----------------------------------------------------------------------------
@@ -7844,7 +8494,7 @@ ATN:
 ; ----------------------------------------------------------------------------
         .byte   $80,$83                         ; E568 80 83
 ; ----------------------------------------------------------------------------
-        lda     #$73                            ; E56A A9 73
+        lda     #XATN                           ; E56A A9 73
         bne     TrigoFct                        ; E56C D0 2B
 
 ; ----------------------------------------------------------------------------
@@ -7860,11 +8510,13 @@ DEEK:
         .byte   $80,$83                         ; E579 80 83
 ; ----------------------------------------------------------------------------
         jsr     LD1F7                           ; E57B 20 F7 D1
+
         ldy     #$00                            ; E57E A0 00
         lda     (FACC1M),y                      ; E580 B1 61
         tax                                     ; E582 AA
         iny                                     ; E583 C8
         lda     (FACC1M),y                      ; E584 B1 61
+
         sta     FACC1M+1                        ; E586 85 62
         stx     FACC1M                          ; E588 86 61
         rts                                     ; E58A 60
@@ -7901,7 +8553,7 @@ EXP:
 ; ----------------------------------------------------------------------------
         .byte   $80,$83                         ; E5AF 80 83
 ; ----------------------------------------------------------------------------
-        lda     #$74                            ; E5B1 A9 74
+        lda     #XEXP                           ; E5B1 A9 74
         bne     TrigoFct                        ; E5B3 D0 E4
 
 ; ----------------------------------------------------------------------------
@@ -7916,7 +8568,7 @@ LN:
 ; ----------------------------------------------------------------------------
         .byte   $80,$83                         ; E5BE 80 83
 ; ----------------------------------------------------------------------------
-        lda     #$75                            ; E5C0 A9 75
+        lda     #XLN                            ; E5C0 A9 75
         bne     TrigoFct                        ; E5C2 D0 D5
 
 ; ----------------------------------------------------------------------------
@@ -7931,7 +8583,7 @@ LOG:
 ; ----------------------------------------------------------------------------
         .byte   $80,$83                         ; E5CE 80 83
 ; ----------------------------------------------------------------------------
-        lda     #$76                            ; E5D0 A9 76
+        lda     #XLOG                           ; E5D0 A9 76
         bne     TrigoFct                        ; E5D2 D0 C5
 
 ; ----------------------------------------------------------------------------
@@ -7947,6 +8599,7 @@ PEEK:
         .byte   $80,$83                         ; E5DF 80 83
 ; ----------------------------------------------------------------------------
         jsr     LD1F7                           ; E5E1 20 F7 D1
+
         ldy     #$00                            ; E5E4 A0 00
         lda     (FACC1M),y                      ; E5E6 B1 61
         sta     FACC1M                          ; E5E8 85 61
@@ -7965,7 +8618,7 @@ RAD:
 ; ----------------------------------------------------------------------------
         .byte   $80,$83                         ; E5F7 80 83
 ; ----------------------------------------------------------------------------
-        lda     #$79                            ; E5F9 A9 79
+        lda     #XRAD                           ; E5F9 A9 79
         bne     TrigoFct                        ; E5FB D0 9C
 
 ; ----------------------------------------------------------------------------
@@ -7980,7 +8633,7 @@ RND:
 ; ----------------------------------------------------------------------------
         .byte   $80,$83                         ; E607 80 83
 ; ----------------------------------------------------------------------------
-        lda     #$77                            ; E609 A9 77
+        lda     #XRND                           ; E609 A9 77
         bne     TrigoFct                        ; E60B D0 8C
 
 ; ----------------------------------------------------------------------------
@@ -8010,7 +8663,7 @@ TAN:
 ; ----------------------------------------------------------------------------
         .byte   $80,$83                         ; E628 80 83
 ; ----------------------------------------------------------------------------
-        lda     #$72                            ; E62A A9 72
+        lda     #XTAN                           ; E62A A9 72
         jmp     TrigoFct                        ; E62C 4C 99 E5
 
 ; ----------------------------------------------------------------------------
@@ -8040,8 +8693,10 @@ LE646:
         jsr     LCF5C                           ; E64A 20 5C CF
         ldy     $8E                             ; E64D A4 8E
         beq     LE65B                           ; E64F F0 0A
+
         lda     FACC1E                          ; E651 A5 60
         beq     LE67A                           ; E653 F0 25
+
         dey                                     ; E655 88
         lda     (FACC1M),y                      ; E656 B1 61
         jmp     LE674                           ; E658 4C 74 E6
@@ -8111,10 +8766,11 @@ BIN$:
         .byte   $80,$83                         ; E6A4 80 83
 ; ----------------------------------------------------------------------------
         jsr     LD1F7                           ; E6A6 20 F7 D1
+
         sec                                     ; E6A9 38
         ror     RES                             ; E6AA 66 00
         ldy     #$10                            ; E6AC A0 10
-        lda     #$25                            ; E6AE A9 25
+        lda     #'%'                            ; E6AE A9 25
         sta     BUFTRV                          ; E6B0 8D 00 01
         ldx     #$01                            ; E6B3 A2 01
 LE6B5:
@@ -8127,18 +8783,21 @@ LE6B5:
 LE6C0:
         sta     RES                             ; E6C0 85 00
         lda     #$00                            ; E6C2 A9 00
-        adc     #$30                            ; E6C4 69 30
+        adc     #'0'                            ; E6C4 69 30
         sta     BUFTRV,x                        ; E6C6 9D 00 01
         inx                                     ; E6C9 E8
 LE6CA:
         dey                                     ; E6CA 88
         bne     LE6B5                           ; E6CB D0 E8
+
 LE6CD:
         cpx     #$01                            ; E6CD E0 01
         bne     LE6D7                           ; E6CF D0 06
+
         inx                                     ; E6D1 E8
-        lda     #$30                            ; E6D2 A9 30
+        lda     #'0'                            ; E6D2 A9 30
         sta     BUFTRV+1                        ; E6D4 8D 01 01
+
 LE6D7:
         jmp     LE779                           ; E6D7 4C 79 E7
 
@@ -8156,8 +8815,10 @@ CHR$:
 ; ----------------------------------------------------------------------------
         jsr     LD22E                           ; E6E7 20 2E D2
         pha                                     ; E6EA 48
+
         lda     #$01                            ; E6EB A9 01
         jsr     LCF52                           ; E6ED 20 52 CF
+
         ldy     #$00                            ; E6F0 A0 00
         pla                                     ; E6F2 68
         sta     (FACC1M),y                      ; E6F3 91 61
@@ -8176,15 +8837,24 @@ HEX$:
         .byte   $80,$83                         ; E701 80 83
 ; ----------------------------------------------------------------------------
         jsr     LD1F7                           ; E703 20 F7 D1
+
+        ; Force b7=1 pour RES
+        ; Permet à la routine de conversion
+        ; de ne pas mettre de '0' en début de la chaine
+        ; ie: 10 -> #A et non #0A
         sec                                     ; E706 38
         ror     RES                             ; E707 66 00
-        lda     #$23                            ; E709 A9 23
+
+        lda     #'#'                            ; E709 A9 23
         sta     BUFTRV                          ; E70B 8D 00 01
+
         ldx     #$01                            ; E70E A2 01
         lda     FACC1M+1                        ; E710 A5 62
         jsr     LE71D                           ; E712 20 1D E7
+
         lda     FACC1M                          ; E715 A5 61
         jsr     LE71D                           ; E717 20 1D E7
+
         jmp     LE6CD                           ; E71A 4C CD E6
 
 ; ----------------------------------------------------------------------------
@@ -8197,21 +8867,31 @@ LE71D:
         jsr     LE728                           ; E722 20 28 E7
         pla                                     ; E725 68
         and     #$0F                            ; E726 29 0F
+
 LE728:
-        ora     #$30                            ; E728 09 30
-        cmp     #$3A                            ; E72A C9 3A
+        ora     #'0'                            ; E728 09 30
+        cmp     #'9'+1                            ; E72A C9 3A
         bcc     LE730                           ; E72C 90 02
         adc     #$06                            ; E72E 69 06
+
 LE730:
-        cmp     #$30                            ; E730 C9 30
+        cmp     #'0'                            ; E730 C9 30
         bne     LE739                           ; E732 D0 05
+
+        ; Est-ce que ce '0' est en début de chaine?
+        ; oui -> on ne l'ajoute pas dans BUFTRV
         bit     RES                             ; E734 24 00
         bmi     LE73F                           ; E736 30 07
         .byte   $2C                             ; E738 2C
+
 LE739:
+        ; Modifie RES pour indiquer qu'on ajoute
+        ; un caractère non '0' dans BUFTRV
         sta     RES                             ; E739 85 00
+
         sta     BUFTRV,x                        ; E73B 9D 00 01
         inx                                     ; E73E E8
+
 LE73F:
         rts                                     ; E73F 60
 
@@ -8228,16 +8908,20 @@ SPC$:
         .byte   $80,$83                         ; E74B 80 83
 ; ----------------------------------------------------------------------------
         jsr     LD22E                           ; E74D 20 2E D2
+
 LE750:
         jsr     LCF52                           ; E750 20 52 CF
+
         tay                                     ; E753 A8
         beq     LE75E                           ; E754 F0 08
+
 LE756:
-        lda     #$20                            ; E756 A9 20
+        lda     #' '                            ; E756 A9 20
         dey                                     ; E758 88
         sta     (FACC1M),y                      ; E759 91 61
         tya                                     ; E75B 98
         bne     LE756                           ; E75C D0 F8
+
 LE75E:
         rts                                     ; E75E 60
 
@@ -8254,15 +8938,19 @@ STR$:
         .byte   $80,$83                         ; E76A 80 83
 ; ----------------------------------------------------------------------------
         jsr     LD23B                           ; E76C 20 3B D2
+        ; Conversion de ACC1 en chaine vers BUFTRV
        _XA1DEC                                  ; E76F 00 68
+
+        ; Calcule la longueur de la chaine dans X
         ldx     #$FF                            ; E771 A2 FF
 LE773:
         inx                                     ; E773 E8
         lda     BUFTRV,x                        ; E774 BD 00 01
         bne     LE773                           ; E777 D0 FA
+
 LE779:
-        lda     #$00                            ; E779 A9 00
-        ldy     #$01                            ; E77B A0 01
+        lda     #<BUFTRV                        ; E779 A9 00
+        ldy     #>BUFTRV                        ; E77B A0 01
         jmp     LCF62                           ; E77D 4C 62 CF
 
 ; ----------------------------------------------------------------------------
@@ -8279,12 +8967,15 @@ ASC:
 ; ----------------------------------------------------------------------------
         lda     FACC1E                          ; E78C A5 60
         beq     LE794                           ; E78E F0 04
+
         ldy     #$00                            ; E790 A0 00
         lda     (FACC1M),y                      ; E792 B1 61
+
 LE794:
         sta     FACC1M                          ; E794 85 61
         lda     #$00                            ; E796 A9 00
         sta     FACC1M+1                        ; E798 85 62
+
         lda     #$00                            ; E79A A9 00
         sta     VARTYP                          ; E79C 85 BA
         rts                                     ; E79E 60
@@ -8352,6 +9043,7 @@ TRUE:
 LE7EB:
         lda     #$00                            ; E7EB A9 00
         ldy     #$00                            ; E7ED A0 00
+
 LE7EF:
         sta     $8E                             ; E7EF 85 8E
         sty     $8F                             ; E7F1 84 8F
@@ -8364,6 +9056,7 @@ LE7FC:
         ora     FACC1M+1                        ; E7FE 05 62
         sta     FACC1E                          ; E800 85 60
 
+        ; Valeur de type numérique (non flottant)
         lda     #$00                            ; E802 A9 00
         sta     VARTYP                          ; E804 85 BA
         rts                                     ; E806 60
@@ -8489,7 +9182,7 @@ RAND:
 ; ----------------------------------------------------------------------------
         .byte   $80,$83                         ; E898 80 83
 ; ----------------------------------------------------------------------------
-        lda     #$7D                            ; E89A A9 7D
+        lda     #XRAND                          ; E89A A9 7D
         jmp     TrigoFct                        ; E89C 4C 99 E5
 
 ; ----------------------------------------------------------------------------
@@ -8516,7 +9209,7 @@ GOTO:
 ; ----------------------------------------------------------------------------
         .byte   $8D,$01                         ; E8B6 8D 01
 ; ----------------------------------------------------------------------------
-        .byte   $4C                             ; E8B8 4C
+        .byte   I_JMP                           ; E8B8 4C
 
 ; ----------------------------------------------------------------------------
 GOSUB_lfa:
@@ -8531,9 +9224,12 @@ GOSUB:
         .byte   $8D,$04                         ; E8C5 8D 04
 ; ----------------------------------------------------------------------------
         jsr     LE8CB                           ; E8C7 20 CB E8
-        .byte   $20                             ; E8CA 20
+        .byte   I_JSR                           ; E8CA 20
 
 LE8CB:
+        ; Incrémente le pointeur de pile GOSUB
+        ; et vérifie qu'on ne dépasse pas le
+        ; nombre maxi
         inc     $C2                             ; E8CB E6 C2
         tsx                                     ; E8CD BA
         cpx     #$28                            ; E8CE E0 28
@@ -8576,7 +9272,7 @@ PRINT:
 ; ----------------------------------------------------------------------------
 LE8F9:
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         jsr     LCA69                           ; E8F9 20 69 CA
 
 LE8FC:
@@ -8586,7 +9282,7 @@ LE8FC:
 
 LE901:
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$25                            ; E901 A9 25
         jsr     LCA69                           ; E903 20 69 CA
 
@@ -8597,7 +9293,7 @@ LE907:
 
 ; ----------------------------------------------------------------------------
 LE908:
-        cmp     #$3B                            ; E908 C9 3B
+        cmp     #';'                            ; E908 C9 3B
         bne     LE918                           ; E90A D0 0C
         lda     #$23                            ; E90C A9 23
         jsr     LE942                           ; E90E 20 42 E9
@@ -8607,7 +9303,7 @@ LE911:
         beq     LE906                           ; E916 F0 EE
 
 LE918:
-        cmp     #$2C                            ; E918 C9 2C
+        cmp     #','                            ; E918 C9 2C
         bne     LE925                           ; E91A D0 09
         lda     #$22                            ; E91C A9 22
         jsr     LE942                           ; E91E 20 42 E9
@@ -8630,7 +9326,7 @@ LE925:
         bcs     LE907                           ; E938 B0 CD
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$24                            ; E93A A9 24
         jsr     LCA69                           ; E93C 20 69 CA
 
@@ -8639,7 +9335,7 @@ LE925:
 ; ----------------------------------------------------------------------------
 LE942:
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         jsr     LCA69                           ; E942 20 69 CA
 
         ; Passe au caractère suivant dans BUFEDT
@@ -8924,9 +9620,12 @@ ERRGOTO:
         iny                                     ; EABE C8
         lda     (RES),y                         ; EABF B1 00
         sta     errgotonl+1                     ; EAC1 8D BB 07
+
+        ; Force b2=1 (ERRGOTO)
         lda     fFlags                          ; EAC4 A5 8C
-        ora     #$04                            ; EAC6 09 04
+        ora     #%00000100                      ; EAC6 09 04
         sta     fFlags                          ; EAC8 85 8C
+
         rts                                     ; EACA 60
 
 ; ----------------------------------------------------------------------------
@@ -9162,11 +9861,11 @@ LEBF3:
         bcs     LEC03                           ; EBF8 B0 09
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         jsr     LCA69                           ; EBFA 20 69 CA
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$2B                            ; EBFD A9 2B
         jsr     LCA69                           ; EBFF 20 69 CA
 
@@ -9178,7 +9877,7 @@ LEC03:
 ; ----------------------------------------------------------------------------
 LEC04:
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$3E                            ; EC04 A9 3E
         jsr     LCA69                           ; EC06 20 69 CA
 
@@ -9216,24 +9915,38 @@ TRACE:
 ; ----------------------------------------------------------------------------
         .byte   $90,$83                         ; EC33 90 83
 ; ----------------------------------------------------------------------------
+        ; C doit être positioné avant l'appel
+        ; (fait par le paramètre SET ou OFF)
+
+        ; Sauvegarde P (pour C)
         php                                     ; EC35 08
+
+        ; Prépare fFlags
         asl     fFlags                          ; EC36 06 8C
+
+        ; Restaure P et place C en b7
         plp                                     ; EC38 28
         ror     fFlags                          ; EC39 66 8C
+
+        ; TRACE OFF? -> ferme la fenêtre 3 du canal 3
         bpl     LEC4E                           ; EC3B 10 11
-        lda     #$8B                            ; EC3D A9 8B
+
+        ; TRACE SET
+        lda     #XSC3                           ; EC3D A9 8B
        _XCL3                                    ; EC3F 00 07
+
         lda     #$62                            ; EC41 A9 62
         ldy     #$02                            ; EC43 A0 02
         ldx     #$03                            ; EC45 A2 03
        _XSCRSE                                  ; EC47 00 36
-        lda     #$8B                            ; EC49 A9 8B
+
+        lda     #XSC3                           ; EC49 A9 8B
        _XOP3                                    ; EC4B 00 03
         rts                                     ; EC4D 60
 
 ; ----------------------------------------------------------------------------
 LEC4E:
-        lda     #$8B                            ; EC4E A9 8B
+        lda     #XSC3                           ; EC4E A9 8B
        _XCL3                                    ; EC50 00 07
         rts                                     ; EC52 60
 
@@ -9350,14 +10063,19 @@ RUN:
         ; CLEAR
         jsr     CLEAR                           ; ECC9 20 A5 FD
 
+        ; AY = n° de la ligne en paramètre de RUN
         lda     FACC1M                          ; ECCC A5 61
         ldy     FACC1M+1                        ; ECCE A4 62
+
+        ; Recherche les adresses d'exécution et source de la ligne (AY) du programme
         jsr     LD0ED                           ; ECD0 20 ED D0
+
+        ; Exécution du programme
         jmp     (ptr00BE)                       ; ECD3 6C BE 00
 
 ; ----------------------------------------------------------------------------
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$3E                            ; ECD6 A9 3E
         jsr     LCA69                           ; ECD8 20 69 CA
 
@@ -9557,8 +10275,8 @@ RESET:
 ; ----------------------------------------------------------------------------
         lsr     virq                            ; EDBF 4E FA 02
 LEDC2:
-        lda     #$00                            ; EDC2 A9 00
-        ldy     #$C0                            ; EDC4 A0 C0
+        lda     #<ColdStart                     ; EDC2 A9 00
+        ldy     #>ColdStart                     ; EDC4 A0 C0
         sta     VEXBNK+1                        ; EDC6 8D 15 04
         sty     VEXBNK+2                        ; EDC9 8C 16 04
         lda     #$07                            ; EDCC A9 07
@@ -9614,6 +10332,7 @@ GRAB:
 ; ----------------------------------------------------------------------------
         .byte   $80,$83                         ; EE13 80 83
 ; ----------------------------------------------------------------------------
+        ; HIMEM = $B400
         ldy     #$B4                            ; EE15 A0 B4
         bne     LEE2B                           ; EE17 D0 12
 
@@ -9629,14 +10348,18 @@ RELEASE:
 ; ----------------------------------------------------------------------------
         .byte   $80,$83                         ; EE27 80 83
 ; ----------------------------------------------------------------------------
+        ; HIMEM = $9800
         ldy     #$98                            ; EE29 A0 98
+
 LEE2B:
         lda     #$00                            ; EE2B A9 00
 LEE2D:
         sta     HIMEM_val                       ; EE2D 8D FB 07
         sty     HIMEM_val+1                     ; EE30 8C FC 07
+
+        ; Force b6=0
         lda     fFlags                          ; EE33 A5 8C
-        and     #$BF                            ; EE35 29 BF
+        and     #%10111111                      ; EE35 29 BF
         sta     fFlags                          ; EE37 85 8C
 
         ; CLEAR
@@ -9892,8 +10615,8 @@ EXT$:
         .byte   $80,$83                         ; EF83 80 83
 ; ----------------------------------------------------------------------------
         jsr     LD40A                           ; EF85 20 0A D4
-        lda     #$5D                            ; EF88 A9 5D
-        ldy     #$05                            ; EF8A A0 05
+        lda     #<EXTDEF                        ; EF88 A9 5D
+        ldy     #>EXTDEF                        ; EF8A A0 05
         ldx     #$03                            ; EF8C A2 03
         jmp     LCF62                           ; EF8E 4C 62 CF
 
@@ -9912,12 +10635,14 @@ EXT:
         lda     FACC1E                          ; EF9D A5 60
         cmp     #$03                            ; EF9F C9 03
         bne     LEFAE                           ; EFA1 D0 0B
+
         ldy     #$02                            ; EFA3 A0 02
 LEFA5:
         lda     (FACC1M),y                      ; EFA5 B1 61
         sta     EXTDEF,y                        ; EFA7 99 5D 05
         dey                                     ; EFAA 88
         bpl     LEFA5                           ; EFAB 10 F8
+
         rts                                     ; EFAD 60
 
 ; ----------------------------------------------------------------------------
@@ -10053,6 +10778,9 @@ ASCII:
 ; ----------------------------------------------------------------------------
         jsr     Print0_SPACE                    ; F052 20 DB D5
         jsr     Print0_SPACE                    ; F055 20 DB D5
+
+        ; Affiche l'entête:
+        ; 0 1 2 3 4 5 6 7 8 9 A B C D E F
         ldx     #$00                            ; F058 A2 00
 LF05A:
         jsr     Print0_SPACE                    ; F05A 20 DB D5
@@ -10063,23 +10791,35 @@ LF05A:
         inx                                     ; F063 E8
         cpx     #$10                            ; F064 E0 10
         bne     LF05A                           ; F066 D0 F2
+
        _XCRLF                                   ; F068 00 25
        _XCRLF                                   ; F06A 00 25
+
+        ; Boucle d'affichage du tableau de caractères
         ldx     #$20                            ; F06C A2 20
 LF06E:
+        ; Affiche la valeur du poids fort en début
+        ; de ligne
         txa                                     ; F06E 8A
         jsr     LF333                           ; F06F 20 33 F3
+
+        ; Boucle d'affichage des caractères
+        ; pour le poids fort X
         ldy     #$10                            ; F072 A0 10
 LF074:
+        ; Affiche le caractère
         jsr     Print0_SPACE                    ; F074 20 DB D5
         txa                                     ; F077 8A
        _XWR0                                    ; F078 00 10
         inx                                     ; F07A E8
         dey                                     ; F07B 88
         bne     LF074                           ; F07C D0 F6
+
+        ; Ligne suivante
        _XCRLF                                   ; F07E 00 25
         txa                                     ; F080 8A
         bpl     LF06E                           ; F081 10 EB
+
        _XCRLF                                   ; F083 00 25
         rts                                     ; F085 60
 
@@ -10147,14 +10887,19 @@ SSPEED:
         .byte   $81,$83                         ; F0D5 81 83
 ; ----------------------------------------------------------------------------
         jsr     GetWord                         ; F0D7 20 84 D4
+
         ldy     #$20                            ; F0DA A0 20
 LF0DC:
         lda     FACC1M+1                        ; F0DC A5 62
         cmp     SSPEED_table+1,y                ; F0DE D9 05 F1
         bne     LF0FB                           ; F0E1 D0 18
+
         lda     FACC1M                          ; F0E3 A5 61
         cmp     SSPEED_table,y                  ; F0E5 D9 04 F1
         bne     LF0FB                           ; F0E8 D0 11
+
+        ; Vitesse trouvée dans la table
+        ; met à jour l'ACIAT et RS232T
         tya                                     ; F0EA 98
         lsr     a                               ; F0EB 4A
         sta     RES                             ; F0EC 85 00
@@ -10162,15 +10907,17 @@ LF0DC:
         and     #$F0                            ; F0F1 29 F0
         ora     RES                             ; F0F3 05 00
         sta     ACIACT                          ; F0F5 8D 1F 03
-        sta     $59                             ; F0F8 85 59
+        sta     RS232T                          ; F0F8 85 59
 LF0FA:
         rts                                     ; F0FA 60
 
-; ----------------------------------------------------------------------------
+        ; ----------------------------------------------------------------------------
+        ; Valeur suivante dans la table
 LF0FB:
         dey                                     ; F0FB 88
         dey                                     ; F0FC 88
         bpl     LF0DC                           ; F0FD 10 DD
+
 ; Erreur: valeur incorrecte
 Error_BADVAL:
         ldx     #$12                            ; F0FF A2 12
@@ -10196,33 +10943,45 @@ SMODE:
         .byte   $82,$83                         ; F130 82 83
 ; ----------------------------------------------------------------------------
         ldy     FACC1E                          ; F132 A4 60
+
 LF134:
         dey                                     ; F134 88
         bmi     LF0FA                           ; F135 30 C3
+
         ldx     #$0D                            ; F137 A2 0D
+
+        ; Boucle de traitement des options de la commande
 LF139:
         lda     SMODE_table1,x                  ; F139 BD 6A F1
         cmp     (FACC1M),y                      ; F13C D1 61
         beq     LF145                           ; F13E F0 05
+
         dex                                     ; F140 CA
         bpl     LF139                           ; F141 10 F6
         bmi     Error_BADVAL                    ; F143 30 BA
+
+        ; ----------------------------------------------------------------------------
 LF145:
+        ; Configuration parité ou écho?
         cpx     #$08                            ; F145 E0 08
         bcs     LF158                           ; F147 B0 0F
-        lda     $59                             ; F149 A5 59
+
+        ; Configure la vitesse, le nb de bits, le nb de stop
+        lda     RS232T                          ; F149 A5 59
         and     SMODE_table2,x                  ; F14B 3D 78 F1
         ora     SMODE_table3,x                  ; F14E 1D 86 F1
-        sta     $59                             ; F151 85 59
+        sta     RS232T                          ; F151 85 59
         sta     ACIACT                          ; F153 8D 1F 03
         bcc     LF134                           ; F156 90 DC
+
 LF158:
+        ; Configure la parité et le mode écho
         lda     ACIACR                          ; F158 AD 1E 03
         and     SMODE_table2,x                  ; F15B 3D 78 F1
         ora     SMODE_table3,x                  ; F15E 1D 86 F1
         sta     ACIACR                          ; F161 8D 1E 03
         and     #$E0                            ; F164 29 E0
-        sta     $5A                             ; F166 85 5A
+        sta     RS232C                          ; F166 85 5A
         bcs     LF134                           ; F168 B0 CA
 
 ; ----------------------------------------------------------------------------
@@ -10937,32 +11696,44 @@ LOAD:
 ; ----------------------------------------------------------------------------
         .byte   $82,$83                         ; F506 82 83
 ; ----------------------------------------------------------------------------
-        jsr     LF997                           ; F508 20 97 F9
+        ; Vérification du nom de fichier - sortie si erreur
+        ; (modification du lecteur par défaut interdite)
+        jsr     _NOMFI+2                        ; F508 20 97 F9
+
 LF50B:
         lda     #XDEFLO                         ; F50B A9 68
         jsr     EXEDOS                          ; F50D 20 64 F9
         lda     #XLOAD                          ; F510 A9 62
         jsr     EXEDOS                          ; F512 20 64 F9
+
 LF515:
+        ; Place le bit d'exécution automatique dans C
         lda     FTYPE                           ; F515 AD 2C 05
         lsr     a                               ; F518 4A
+
+        ; Si fichier non source -> LF53D
         lda     FTYPE                           ; F519 AD 2C 05
         bpl     LF53D                           ; F51C 10 1F
+
+        ; Fichier source, on met les pointeurs
+        ; de fin de source à jour
         lda     FISALO                          ; F51E AD 2F 05
         ldy     FISALO+1                        ; F521 AC 30 05
         sta     SCEFIN                          ; F524 85 5E
         sty     SCEFIN+1                        ; F526 84 5F
+
         php                                     ; F528 08
         jsr     LCAE8                           ; F529 20 E8 CA
         plp                                     ; F52C 28
         bcc     LF53A                           ; F52D 90 0B
+
         ldx     #$00                            ; F52F A2 00
         jsr     LDA03                           ; F531 20 03 DA
 
         ; CLEAR
         jsr     CLEAR                           ; F534 20 A5 FD
 
-        jmp     (ptr_07F9)                      ; F537 6C F9 07
+        jmp     (PGMSTART)                      ; F537 6C F9 07
 
 ; ----------------------------------------------------------------------------
 LF53A:
@@ -10970,6 +11741,7 @@ LF53A:
 
 ; ----------------------------------------------------------------------------
 LF53D:
+        ; Si C=1, exécution automatique
         bcc     LF549                           ; F53D 90 0A
         jmp     (EXSALO)                        ; F53F 6C 31 05
 
@@ -11043,13 +11815,13 @@ SAVE":
         jsr     LF634                           ; F592 20 34 F6
 LF595:
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$36                            ; F595 A9 36
         jsr     LCA69                           ; F597 20 69 CA
 
 LF59A:
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$31                            ; F59A A9 31
         jsr     LCA69                           ; F59C 20 69 CA
 
@@ -11066,34 +11838,42 @@ LF59F:
         jsr     LCB50                           ; F5A9 20 50 CB
         bcc     LF5BA                           ; F5AC 90 0C
 
+        ; /?\ On ne vérifie pas que le paramètre trouvé est bien 'AUTO'???
         stx     TXTPTR                          ; F5AE 86 C4
 
-        ; Compile ACC,#$FF en $600,$C5 et ajuste $C5 (ACC est inchangé)
+        ; Compile ACC,#$FF en L0600,$C5 et ajuste $C5 (ACC est inchangé)
         jsr     LCA7A                           ; F5B0 20 7A CA
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$32                            ; F5B3 A9 32
         jsr     LCA69                           ; F5B5 20 69 CA
 
 LF5B8:
+        ; Sortie avec C=0 -> Ok
         clc                                     ; F5B8 18
         rts                                     ; F5B9 60
 
-; ----------------------------------------------------------------------------
+        ; ----------------------------------------------------------------------------
+        ; Traitement des paramètres 'A','E','T' de l'instruction "SAVE"
 LF5BA:
         ; Saute les espaces jusqu'au prochain caractère dans BUFEDT
         jsr     LC688                           ; F5BA 20 88 C6
+
         jsr     min_MAJ                         ; F5BD 20 45 CB
         ldx     #$33                            ; F5C0 A2 33
-        cmp     #$41                            ; F5C2 C9 41
+        cmp     #'A'                            ; F5C2 C9 41
         beq     LF5D0                           ; F5C4 F0 0A
+
         inx                                     ; F5C6 E8
-        cmp     #$45                            ; F5C7 C9 45
+        cmp     #'E'                            ; F5C7 C9 45
         beq     LF5D0                           ; F5C9 F0 05
+
         inx                                     ; F5CB E8
-        cmp     #$54                            ; F5CC C9 54
+        cmp     #'T'                            ; F5CC C9 54
         bne     LF5E4                           ; F5CE D0 14
+
+        ; Traitement de l'adresse qui suit l'option 'A' / 'E' / 'T'
 LF5D0:
         txa                                     ; F5D0 8A
         pha                                     ; F5D1 48
@@ -11101,7 +11881,7 @@ LF5D0:
         adc     #$04                            ; F5D3 69 04
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         jsr     LCA69                           ; F5D5 20 69 CA
 
         inc     TXTPTR                          ; F5D8 E6 C4
@@ -11110,13 +11890,15 @@ LF5D0:
         jsr     LC674                           ; F5DA 20 74 C6
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         pla                                     ; F5DD 68
         jsr     LCA69                           ; F5DE 20 69 CA
 
+        ; Boucle pour le prochain paramètre
         jmp     LF59F                           ; F5E1 4C 9F F5
 
 ; ----------------------------------------------------------------------------
+; Sortie avec C=1 -> Erreur de paramètre
 LF5E4:
         sec                                     ; F5E4 38
         rts                                     ; F5E5 60
@@ -11136,14 +11918,16 @@ LF5FD:
         rts                                     ; F5FD 60
 
 ; ----------------------------------------------------------------------------
-LF5FE:
+; Récupère l'adresse de début du fichier
+Get_DESALO:
         jsr     GetWord                         ; F5FE 20 84 D4
         sta     DESALO                          ; F601 8D 2D 05
         sty     DESALO+1                        ; F604 8C 2E 05
         jmp     LF613                           ; F607 4C 13 F6
 
 ; ----------------------------------------------------------------------------
-LF60A:
+; Récupère l'adresse de fin du fichier
+Get_FISALO:
         jsr     GetWord                         ; F60A 20 84 D4
         sta     FISALO                          ; F60D 8D 2F 05
         sty     FISALO+1                        ; F610 8C 30 05
@@ -11153,7 +11937,8 @@ LF613:
         rts                                     ; F618 60
 
 ; ----------------------------------------------------------------------------
-LF619:
+; Récupère l'adresse d'exécution du fichier
+Get_EXSALO:
         jsr     GetWord                         ; F619 20 84 D4
         sta     EXSALO                          ; F61C 8D 31 05
         sty     EXSALO+1                        ; F61F 8C 32 05
@@ -11164,15 +11949,22 @@ LF619:
 
 ; ----------------------------------------------------------------------------
 LF62B:
+        ; $00 -> SAVEO"
         lda     #$00                            ; F62B A9 00
         .byte   $2C                             ; F62D 2C
+
 LF62E:
+        ; $40 -> "SAVEM"
         lda     #$40                            ; F62E A9 40
         .byte   $2C                             ; F630 2C
+
 LF631:
+        ; $C0 -> "SAVEU"
         lda     #$C0                            ; F631 A9 C0
         .byte   $2C                             ; F633 2C
+
 LF634:
+        ; $80 -> "SAVE"
         lda     #$80                            ; F634 A9 80
         sta     VASALO0                         ; F636 8D 28 05
         jsr     Check_Addr_range                ; F639 20 38 D1
@@ -11180,18 +11972,27 @@ LF634:
         jmp     EXEDOS                          ; F63E 4C 64 F9
 
 ; ----------------------------------------------------------------------------
+; Initialise les variables DESALO/FISALO/EXSALO et FTYPE
+; pour un fichier source
 LF641:
+        ; Met à jour FISALO
         lda     SCEFIN                          ; F641 A5 5E
         ldy     SCEFIN+1                        ; F643 A4 5F
         sta     FISALO                          ; F645 8D 2F 05
         sty     FISALO+1                        ; F648 8C 30 05
-        lda     #$F0                            ; F64B A9 F0
-        ldy     #$07                            ; F64D A0 07
+
+        ; Met à jour DESALO
+        lda     #<L07F0                         ; F64B A9 F0
+        ldy     #>L07F0                         ; F64D A0 07
         sta     DESALO                          ; F64F 8D 2D 05
         sty     DESALO+1                        ; F652 8C 2E 05
+
+        ; Adresse d'exécution: $0000
         lda     #$00                            ; F655 A9 00
         sta     EXSALO                          ; F657 8D 31 05
         sta     EXSALO+1                        ; F65A 8D 32 05
+
+        ; Type de fichier: source
         lda     #$80                            ; F65D A9 80
         sta     FTYPE                           ; F65F 8D 2C 05
         rts                                     ; F662 60
@@ -11362,7 +12163,7 @@ LF738:
         bcs     LF74E                           ; F742 B0 0A
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$45                            ; F744 A9 45
         jsr     LCA69                           ; F746 20 69 CA
 
@@ -11387,7 +12188,10 @@ ESAVE:
 ; ----------------------------------------------------------------------------
         .byte   $82,$83                         ; F75B 82 83
 ; ----------------------------------------------------------------------------
-        jsr     LF997                           ; F75D 20 97 F9
+        ; Vérification du nom de fichier - sortie si erreur
+        ; (modification du lecteur par défaut interdite)
+        jsr     _NOMFI+2                        ; F75D 20 97 F9
+
         lda     #XESAVE                         ; F760 A9 35
         jmp     EXEDOS                          ; F762 4C 64 F9
 
@@ -11411,7 +12215,11 @@ OPEN:
         ldx     #$08                            ; F77F A2 08
 LF781:
         stx     FTYPE                           ; F781 8E 2C 05
-        jsr     LF997                           ; F784 20 97 F9
+
+        ; Vérification du nom de fichier - sortie si erreur
+        ; (modification du lecteur par défaut interdite)
+        jsr     _NOMFI+2                        ; F784 20 97 F9
+
         jsr     LD449                           ; F787 20 49 D4
         sta     FICNUM                          ; F78A 8D 48 05
         lda     #XOPEN                          ; F78D A9 1A
@@ -11473,17 +12281,21 @@ LF7D6:
         stx     $C5                             ; F7D8 86 C5
         bit     $51                             ; F7DA 24 51
         bpl     LF806                           ; F7DC 10 28
+
         ldy     #$04                            ; F7DE A0 04
 LF7E0:
         lda     ($C4),y                         ; F7E0 B1 C4
         sta     FACC1E,y                        ; F7E2 99 60 00
         dey                                     ; F7E5 88
         bpl     LF7E0                           ; F7E6 10 F8
+
         bit     FACC1S                          ; F7E8 24 65
         bmi     LF7C6                           ; F7EA 30 DA
+
         ldy     #$03                            ; F7EC A0 03
         lda     ($BC),y                         ; F7EE B1 BC
         bne     LF7C6                           ; F7F0 D0 D4
+
         sta     VARTYP                          ; F7F2 85 BA
         lda     FACC1E                          ; F7F4 A5 60
         ldx     FACC1M                          ; F7F6 A6 61
@@ -11707,11 +12519,11 @@ FILE:
         lda     #XLGBUF                         ; F92F A9 2F
         jsr     EXEDOS                          ; F931 20 64 F9
         sec                                     ; F934 38
-        lda     ptr_07F9                        ; F935 AD F9 07
+        lda     PGMSTART                        ; F935 AD F9 07
         sbc     DECDEB                          ; F938 E5 04
         sta     $07B5                           ; F93A 8D B5 07
         sta     TAMPFC                          ; F93D 8D 42 05
-        lda     ptr_07F9+1                      ; F940 AD FA 07
+        lda     PGMSTART+1                      ; F940 AD FA 07
         sbc     DECDEB+1                        ; F943 E5 05
         sta     $07B6                           ; F945 8D B6 07
         sta     TAMPFC+1                        ; F948 8D 43 05
@@ -11795,11 +12607,11 @@ LF994:
 
 ; ----------------------------------------------------------------------------
 ; Vérification du nom de fichier demandé
-
 _NOMFI:
         ; Modification du lecteur par défaut autorisée
         clc                                     ; F995 18
         .byte   $24                             ; F996 24
+
 LF997:
         ; Modification du lecteur par défaut interdite
         sec                                     ; F997 38
@@ -11836,10 +12648,13 @@ LF9B8:
         stx     DRIVE                           ; F9B8 8E 00 05
         ldy     TABDRV,x                        ; F9BB BC 08 02
         bne     LF994                           ; F9BE D0 D4
+
+        ; Erreur: 'lecteur absent'
         ldx     #$0D                            ; F9C0 A2 0D
         .byte   $2C                             ; F9C2 2C
-; Erreur: 'nom de fichier incorrect' ou 'lecteur absent' via $F9C0
+
 Error_FNAME:
+        ; Erreur: 'nom de fichier incorrect'
         ldx     #$0C                            ; F9C3 A2 0C
         jmp     Error_X                         ; F9C5 4C 7E D1
 
@@ -11848,9 +12663,11 @@ LF9C8:
         sty     L07EA+1                         ; F9C8 8C EB 07
         pha                                     ; F9CB 48
         jsr     Check_HIRES_mode                ; F9CC 20 4F D1
+
         jsr     GetByte                         ; F9CF 20 4F D4
         cmp     #$04                            ; F9D2 C9 04
         bcs     LFA25                           ; F9D4 B0 4F
+
         lsr     a                               ; F9D6 4A
         ror     a                               ; F9D7 6A
         ror     a                               ; F9D8 6A
@@ -11864,6 +12681,7 @@ LF9C8:
 LF9E0:
         clc                                     ; F9E0 18
         sty     L07EA+1                         ; F9E1 8C EB 07
+
 LF9E4:
         sta     TR7                             ; F9E4 85 13
         ror     TR6                             ; F9E6 66 12
@@ -11872,29 +12690,37 @@ LF9E4:
         sta     HRSERR                          ; F9EC 8D AB 02
         dec     TR7                             ; F9EF C6 13
         beq     LFA13                           ; F9F1 F0 20
+
         ldx     #$00                            ; F9F3 A2 00
         jsr     LFA28                           ; F9F5 20 28 FA
         dec     TR7                             ; F9F8 C6 13
         beq     LFA13                           ; F9FA F0 17
+
         ldx     #$06                            ; F9FC A2 06
         jsr     LFA28                           ; F9FE 20 28 FA
         dec     TR7                             ; FA01 C6 13
         beq     LFA13                           ; FA03 F0 0E
+
         ldx     #$0C                            ; FA05 A2 0C
         jsr     LFA28                           ; FA07 20 28 FA
         dec     TR7                             ; FA0A C6 13
         beq     LFA13                           ; FA0C F0 05
+
         ldx     #$12                            ; FA0E A2 12
         jsr     LFA28                           ; FA10 20 28 FA
+
 LFA13:
         bit     TR6                             ; FA13 24 12
         bmi     LFA1C                           ; FA15 30 05
+
         ldx     #$C3                            ; FA17 A2 C3
         jsr     LFA28                           ; FA19 20 28 FA
+
 LFA1C:
         jsr     L07EA                           ; FA1C 20 EA 07
         lda     HRSERR                          ; FA1F AD AB 02
         bne     LFA25                           ; FA22 D0 01
+
         rts                                     ; FA24 60
 
 ; ----------------------------------------------------------------------------
@@ -12133,6 +12959,7 @@ CLCH:
         cmp     #$18                            ; FB55 C9 18
 LFB57:
         bcs     LFBD2                           ; FB57 B0 79
+
         ora     #$80                            ; FB59 09 80
         jmp     BUFTRV                          ; FB5B 4C 00 01
 
@@ -12140,9 +12967,9 @@ LFB57:
 ; Prépare BUFTRV: BRK xx RTS
 ; xx sera mis à jour par la routine appelante
 LFB5E:
-        lda     #$00                            ; FB5E A9 00
+        lda     #I_BRK                            ; FB5E A9 00
         sta     BUFTRV                          ; FB60 8D 00 01
-        lda     #$60                            ; FB63 A9 60
+        lda     #I_RTS                          ; FB63 A9 60
         sta     BUFTRV+2                        ; FB65 8D 02 01
         rts                                     ; FB68 60
 
@@ -12161,13 +12988,21 @@ OPCH:
         ; Prépare BUFTRV: BRK xx RTS
         jsr     LFB5E                           ; FB77 20 5E FB
 
+        ; N° de canal >=4? -> Error_BADVAL
         jsr     LD44C                           ; FB7A 20 4C D4
         cmp     #$04                            ; FB7D C9 04
         bcs     LFBD2                           ; FB7F B0 51
+
+        ; Place XOPx dans BUFTRV
         sta     BUFTRV+1                        ; FB81 8D 01 01
+
+        ; N° d'E/S >= $18? -> Error_BADVAL
+        ; /!\ D'après le manuel, annexe 4, cette valeur doit être <= 20
         jsr     GetByte                         ; FB84 20 4F D4
         cmp     #$18                            ; FB87 C9 18
         bcs     LFBD2                           ; FB89 B0 47
+
+        ; Force b7 = 1
         ora     #$80                            ; FB8B 09 80
         jmp     BUFTRV                          ; FB8D 4C 00 01
 
@@ -12183,43 +13018,81 @@ CROSSX:
 ; ----------------------------------------------------------------------------
         .byte   $01,$01,$01,$81,$83             ; FB9D 01 01 01 81 83
 ; ----------------------------------------------------------------------------
+        ; Vérifie que la valeur lue par LD451 est <8
         ldx     #$00                            ; FBA2 A2 00
         jsr     LFBD5                           ; FBA4 20 D5 FB
+
+        ; Ouverture de l'entrée sur le canal 1
        _XOP1                                    ; FBA7 00 01
+
+        ; Vérifie que la valeur lue par LD451 est >=8 et < $18
         ldx     #$06                            ; FBA9 A2 06
         jsr     LFBDF                           ; FBAB 20 DF FB
+
+        ; Ouverture de la sortie sur le canal 1
        _XOP1                                    ; FBAE 00 01
+
+        ; Vérifie que la valeur lue par LD451 est <8
         ldx     #$0C                            ; FBB0 A2 0C
         jsr     LFBD5                           ; FBB2 20 D5 FB
+
+        ; Ouverture de l'entrée sur le canal 2
        _XOP2                                    ; FBB5 00 02
+
+        ; Vérifie que la valeur lue par LD451 est >=8 et < $18
         ldx     #$C3                            ; FBB7 A2 C3
         jsr     LFBDF                           ; FBB9 20 DF FB
+
+        ; Ouverture de la sortie sur le canal 2
        _XOP2                                    ; FBBC 00 02
+
+        ; Boucle de lecture/écriture entre les canaux
 LFBBE:
+        ; Sauvegarde flag CTRL+C pressé
         asl     KBDCTC                          ; FBBE 0E 7E 02
         php                                     ; FBC1 08
+
         jsr     LFBEB                           ; FBC2 20 EB FB
+
        _XRD2                                    ; FBC5 00 0A
         bcs     LFBCB                           ; FBC7 B0 02
+
        _XWR2                                    ; FBC9 00 12
+
 LFBCB:
+        ; Restaure flag CTRL+C pressé
         plp                                     ; FBCB 28
         bcc     LFBBE                           ; FBCC 90 F0
+
+        ; CTRL+C a été pressé
+        ; Fermeture des E/S des canaux 1 & 2
         ldx     #$07                            ; FBCE A2 07
         bne     LFC1B                           ; FBD0 D0 49
+
 LFBD2:
         jmp     Error_BADVAL                    ; FBD2 4C FF F0
 
 ; ----------------------------------------------------------------------------
+; Vérifie que la valeur lue par LD451 est <8 (n° d'entrée)
+; sinon -> Error_BADVAL
+;
+; Sortie:
+;    ACC: valeur +$80
 LFBD5:
         jsr     LD451                           ; FBD5 20 51 D4
         cmp     #$08                            ; FBD8 C9 08
 LFBDA:
         bcs     LFBD2                           ; FBDA B0 F6
+
         ora     #$80                            ; FBDC 09 80
         rts                                     ; FBDE 60
 
 ; ----------------------------------------------------------------------------
+; Vérifie que la valeur lue par LD451 est >=8 et < $18 (n° de sortie)
+; sinon -> Error_BADVAL
+;
+; Sortie:
+;    ACC: valeur
 LFBDF:
         jsr     LD451                           ; FBDF 20 51 D4
         cmp     #$08                            ; FBE2 C9 08
@@ -12228,10 +13101,13 @@ LFBDF:
         jmp     LFBDA                           ; FBE8 4C DA FB
 
 ; ----------------------------------------------------------------------------
+; Lit un octet depuis le canal 1 et l'écrit sur la canal 1 le cas échéant
 LFBEB:
        _XRD1                                    ; FBEB 00 09
         bcs     LFBF1                           ; FBED B0 02
+
        _XWR1                                    ; FBEF 00 11
+
 LFBF1:
         rts                                     ; FBF1 60
 
@@ -12250,16 +13126,28 @@ CROSS:
         ldx     #$00                            ; FC01 A2 00
         jsr     LFBD5                           ; FC03 20 D5 FB
        _XOP1                                    ; FC06 00 01
+
         ldx     #$C3                            ; FC08 A2 C3
         jsr     LFBDF                           ; FC0A 20 DF FB
        _XOP1                                    ; FC0D 00 01
+
+        ; Boucle de lecture/écriture entre les E/S
 LFC0F:
+        ; Sauvegarde flag CTRL+C pressé
         asl     KBDCTC                          ; FC0F 0E 7E 02
         php                                     ; FC12 08
+
+        ; Lit un octet depuis le canal 1 et l'écrit sur la canal 1 le cas échéant
         jsr     LFBEB                           ; FC13 20 EB FB
+
+        ; Restaure flag CTRL+C pressé
         plp                                     ; FC16 28
         bcc     LFC0F                           ; FC17 90 F6
+
+        ; CTRL+C a été pressé
+        ; Fermeture des E/S du canal 1
         ldx     #$03                            ; FC19 A2 03
+
 LFC1B:
         lsr     IOTAB1,x                        ; FC1B 5E B2 02
         dex                                     ; FC1E CA
@@ -12527,8 +13415,9 @@ ERROFF:
 ; ----------------------------------------------------------------------------
         .byte   $80,$83                         ; FD8E 80 83
 ; ----------------------------------------------------------------------------
+        ; Force b2=0
         lda     fFlags                          ; FD90 A5 8C
-        and     #$FB                            ; FD92 29 FB
+        and     #%11111011                      ; FD92 29 FB
         sta     fFlags                          ; FD94 85 8C
         rts                                     ; FD96 60
 
@@ -12546,50 +13435,84 @@ CLEAR_nfa:
 ; ----------------------------------------------------------------------------
 CLEAR:
         jsr     LCE51                           ; FDA5 20 51 CE
-        ldx     #$FD                            ; FDA8 A2 FD
-        lda     #$07                            ; FDAA A9 07
+
+        ldx     #<VARBOT                        ; FDA8 A2 FD
+        lda     #>VARBOT                        ; FDAA A9 07
         ldy     #$01                            ; FDAC A0 01
+
 LFDAE:
         stx     TR0                             ; FDAE 86 0C
         sta     TR1                             ; FDB0 85 0D
+
+        ; Pas de variables? -> fin
         lda     (TR0),y                         ; FDB2 B1 0C
         beq     LFE08                           ; FDB4 F0 52
+
+        ; X = Type de la variable
         iny                                     ; FDB6 C8
         lda     (TR0),y                         ; FDB7 B1 0C
         tax                                     ; FDB9 AA
+
+        ; Y = Offset vers la valeur de la variable
         ldy     #$06                            ; FDBA A0 06
         lda     (TR0),y                         ; FDBC B1 0C
         tay                                     ; FDBE A8
+
+        ; Variable de type alpha?
         cpx     #$08                            ; FDBF E0 08
         beq     LFDD5                           ; FDC1 F0 12
+
+        ; Variable de type numérique?
         cpx     #$09                            ; FDC3 E0 09
         beq     LFDD5                           ; FDC5 F0 0E
+
+        ; Variable de type tableau alpha?
         cpx     #$0C                            ; FDC7 E0 0C
         beq     LFDCF                           ; FDC9 F0 04
+
+        ; Variable de type tableau numérique?
         cpx     #$0D                            ; FDCB E0 0D
         bne     LFDDF                           ; FDCD D0 10
+
+
 LFDCF:
+        ; Rempli le tableau avec des $00
         jsr     LFDEA                           ; FDCF 20 EA FD
+
+        ; On passe à la variable suivante
         jmp     LFDDF                           ; FDD2 4C DF FD
 
-; ----------------------------------------------------------------------------
+        ; ----------------------------------------------------------------------------
 LFDD5:
+        ; Initialise la valeur de la variable à  $00,$00,$00
         lda     #$00                            ; FDD5 A9 00
         sta     (TR0),y                         ; FDD7 91 0C
         iny                                     ; FDD9 C8
         sta     (TR0),y                         ; FDDA 91 0C
         iny                                     ; FDDC C8
         sta     (TR0),y                         ; FDDD 91 0C
+
+; On passe à la variable suivante de la table
 LFDDF:
+        ; AX=Adresse de la variable suivante
         ldy     #$00                            ; FDDF A0 00
         lda     (TR0),y                         ; FDE1 B1 0C
         tax                                     ; FDE3 AA
         iny                                     ; FDE4 C8
         lda     (TR0),y                         ; FDE5 B1 0C
+
+        ; Boucle
         jmp     LFDAE                           ; FDE7 4C AE FD
 
 ; ----------------------------------------------------------------------------
+; Initialise un tableau avec des $00
+;
+; Entrée:
+;    TR0: Adresse du descripteur du tableau
+;
+; Appelé depuis CLEAR et LCF81
 LFDEA:
+        ; RES = Adresse du premier élément du tableau
         ldy     #$06                            ; FDEA A0 06
         lda     (TR0),y                         ; FDEC B1 0C
         sec                                     ; FDEE 38
@@ -12599,14 +13522,19 @@ LFDEA:
         lda     #$00                            ; FDF5 A9 00
         adc     TR1                             ; FDF7 65 0D
         sta     RES+1                           ; FDF9 85 01
+
+        ; XY = Adresse vers la variable suivante
         ldy     #$01                            ; FDFB A0 01
         lda     (TR0),y                         ; FDFD B1 0C
         tax                                     ; FDFF AA
         dey                                     ; FE00 88
         lda     (TR0),y                         ; FE01 B1 0C
         tay                                     ; FE03 A8
+
+        ; Initialise la zone RES->XY avec $00
         lda     #$00                            ; FE04 A9 00
        _XFILLM                                  ; FE06 00 1C
+
 LFE08:
         rts                                     ; FE08 60
 
@@ -12711,11 +13639,16 @@ LFE89:
         rts                                     ; FE89 60
 
 ; ----------------------------------------------------------------------------
+LFE8A
         tsx                                     ; FE8A BA
         stx     savem_S                         ; FE8B 8E F1 07
+
+        ; Est-ce qu'un programme Hyperbasic est présent?
         lda     $0800                           ; FE8E AD 00 08
         beq     LFE89                           ; FE91 F0 F6
-        jmp     (ptr_07F9)                      ; FE93 6C F9 07
+
+        ; Oui, on l'exécute
+        jmp     (PGMSTART)                      ; FE93 6C F9 07
 
 ; ----------------------------------------------------------------------------
 APLIC_lfa:
@@ -12733,6 +13666,7 @@ APLIC:
         sta     $4D                             ; FEA7 85 4D
         sty     $4E                             ; FEA9 84 4E
         lda     #$BF                            ; FEAB A9 BF
+
 LFEAD:
         ldy     #$03                            ; FEAD A0 03
         sty     BNKCID                          ; FEAF 8C 17 04
@@ -12762,7 +13696,7 @@ TINPUT:
 
 ; ----------------------------------------------------------------------------
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$47                            ; FEDD A9 47
         jsr     LCA69                           ; FEDF 20 69 CA
 
@@ -12786,7 +13720,7 @@ TINPUT:
         bcs     LFF01                           ; FEFA B0 05
 
         ; Ajoute le nombre d'octets de la procédure A-#$20 de la table LE490 à $C2
-        ; Compile ACC,$FF en $0600,$C5 et incrémente $C5 (ACC est inchangé)
+        ; Compile ACC,$FF en L0600,$C5 et incrémente $C5 (ACC est inchangé)
         lda     #$2F                            ; FEFC A9 2F
         jsr     LCA69                           ; FEFE 20 69 CA
 
@@ -12806,6 +13740,7 @@ MIDDLE$:
         .byte   $80,$83                         ; FF10 80 83
 ; ----------------------------------------------------------------------------
         jsr     LEB47                           ; FF12 20 47 EB
+
         sec                                     ; FF15 38
         lda     FACC1M+2                        ; FF16 A5 63
         sbc     FACC1E                          ; FF18 E5 60
@@ -12818,8 +13753,10 @@ MIDDLE$:
         clc                                     ; FF23 18
         adc     FACC1E                          ; FF24 65 60
         pha                                     ; FF26 48
+
         tya                                     ; FF27 98
         jsr     LE750                           ; FF28 20 50 E7
+
         pla                                     ; FF2B 68
         sta     FACC1E                          ; FF2C 85 60
         rts                                     ; FF2E 60
@@ -12899,7 +13836,7 @@ SCHAR:
 
 ; ----------------------------------------------------------------------------
 CONT_lfa:
-        .addr   L07FD                           ; FF8B FD 07
+        .addr   VARBOT                          ; FF8B FD 07
 ; ----------------------------------------------------------------------------
 CONT_pfa:
         .byte   $01,$00,$C0,$D9,$0B             ; FF8D 01 00 C0 D9 0B
@@ -12989,7 +13926,7 @@ NMI_vector:
         .addr   LEF10                           ; FFFA 10 EF
 
 RST_vector:
-        .addr   LC000                           ; FFFC 00 C0
+        .addr   ColdStart                           ; FFFC 00 C0
 
 IRQ_vector:
         .addr   virq                            ; FFFE FA 02
