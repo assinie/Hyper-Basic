@@ -8,6 +8,9 @@
             CPU             "6502";
         };
 
+############################################################
+# Page 00
+############################################################
 label { addr $0000; size 2; name "RES"; };
 label { addr $0002; size 2; name "RESB"; };
 
@@ -58,10 +61,19 @@ label { addr $00be; size 2; name "ptr00BE"; comment "Pointeur pour xxx"; };
 label { addr $00c0; size 2; name "ptr00C0"; comment "Pointeur pour xxx"; };
 
 
+############################################################
+# Page 01
+############################################################
+label { addr $0100; size 16; name "BUFTRV"; };
+
+
+############################################################
+# Page 02
+############################################################
 label { addr $0208; size 4; name "TABDRV"; comment "Activation des lecteurs"; };
 label { addr $020c; name "DRVDEF"; comment "Numéro (0-3) du lecteur par défaut"; };
 label { addr $020d; name "FLGTEL"; comment "b7:1-> haute résolution, b6:1-> mode minitel, b5:1-> mode degrés (0->radian), b2:1->BONJOUR.COM existe, b1:1->imprimante CENTRONICS détectée, b0:1-> STRATSED absent"; };
-label { addr $0210; name "TIMES"; comment "Horloge: 1/10 secondes"; };
+label { addr $0210; name "TIMED"; comment "Horloge: 1/10 secondes"; };
 label { addr $0211; name "TIMES"; comment "Horloge: secondes"; };
 label { addr $0212; name "TIMEM"; comment "Horloge: minutes"; };
 label { addr $0213; name "TIMEH"; comment "Horloge: heures"; };
@@ -86,16 +98,28 @@ label { addr $02f4; size 3; name "vnmi"; comment "Vecteur NMI (n° de banque, ad
 label { addr $02fd; size 3; name "vaplic"; comment "N° banque, adresse TELEMATIC->LANGAGE"; };
 label { addr $02fa; size 3; name "virq"; comment "Vecteur IRQ"; };
 
+
+############################################################
+# Page 03
+############################################################
 label { addr $031c; size 1; name "ACIADR"; comment "ACIA Registre de Données"; };
 label { addr $031d; size 1; name "ACIASR"; comment "ACIA Registre d'état"; };
 label { addr $031e; size 1; name "ACIACR"; comment "ACIA Registre de Commande"; };
 label { addr $031f; size 1; name "ACIACT"; comment "ACIA Registre de Controle"; };
 label { addr $0321; size 1; name "v2dra"; };
 
+
+############################################################
+# Page 04
+############################################################
 label { addr $040c; name "EXBNK"; };
 label { addr $0414; size 3; name "VEXBNK"; };
 label { addr $0417; name "BNKCID"; };
 
+
+############################################################
+# Page 05
+############################################################
 label { addr $0500; name "DRIVE"; comment "N° de lecteur"; };
 label { addr $0517; size 13; name "BUFNOM"; comment "Nom de fichier (drive+nom+extension)"; };
 label { addr $0528; name "VASALO0"; comment "Flag lecture/écriture"; };
@@ -111,6 +135,14 @@ label { addr $054c; name "XFIELD"; comment "Pour fichier accès direct: xfield=n
 label { addr $055d; size 3; name "EXTDEF"; comment "Extension par défaut"; };
 label { addr $0590; name "BUFEDT"; comment "Buffer Editeur de Texte"; };
 
+############################################################
+# Page 06
+############################################################
+
+
+############################################################
+# Page 07
+############################################################
 label { addr $0700; name "SP"; comment "Pointeur de la pile"; };
 label { addr $0701; name "Stack"; comment "Pile pour xxx"; };
 
@@ -127,6 +159,9 @@ label { addr $07fb; size 2; name "HIMEM_val"; comment "Valeur de HIMEM (valeur i
 
 
 
+############################################################
+# Cartouche Hyperbasic v2.0b
+############################################################
 label { addr $c633; name "PrintAttentionMsg"; comment "Affiche 'Attention: '+msg erreur sur la ligne de status. Code erreur dans $CA"; };
 
 range { start $c69c; end $c6c9; type rtstable; };
@@ -911,10 +946,10 @@ range { start $f33d; end $f341; type bytetable; name "SLOAD_pfa"; };
 range { start $f342; end $f346; type texttable; name "SLOAD"; };
 range { start $f347; end $f348; type bytetable; };
 
-range { start $f34f; end $f350; type addrtable; name "SSAVE\"_lfa"; };
-range { start $f351; end $f355; type bytetable; name "SSAVE\"_pfa"; };
-range { start $f356; end $f35b; type texttable; name "SSAVE\""; };
-range { start $f35c; end $f35e; type bytetable; };
+range { start $f34f; end $f350; type addrtable; name "SSAVE_lfa"; };
+range { start $f351; end $f355; type bytetable; name "SSAVE_pfa"; };
+range { start $f356; end $f35a; type texttable; name "SSAVE"; };
+range { start $f35b; end $f35e; type bytetable; };
 
 range { start $f366; end $f367; type addrtable; name "SDUMP_lfa"; };
 range { start $f368; end $f36c; type bytetable; name "SDUMP_pfa"; };
@@ -941,10 +976,10 @@ range { start $f3c2; end $f3c6; type bytetable; name "MLOAD_pfa"; };
 range { start $f3c7; end $f3cb; type texttable; name "MLOAD"; };
 range { start $f3cc; end $f3cd; type bytetable; };
 
-range { start $f3d4; end $f3d5; type addrtable; name "MSAVE\"_lfa"; };
-range { start $f3d6; end $f3da; type bytetable; name "MSAVE\"_pfa"; };
-range { start $f3db; end $f3e0; type texttable; name "MSAVE\""; };
-range { start $f3e1; end $f3e3; type bytetable; };
+range { start $f3d4; end $f3d5; type addrtable; name "MSAVE_lfa"; };
+range { start $f3d6; end $f3da; type bytetable; name "MSAVE_pfa"; };
+range { start $f3db; end $f3df; type texttable; name "MSAVE"; };
+range { start $f3e0; end $f3e3; type bytetable; };
 
 range { start $f3ee; end $f3ef; type addrtable; name "RING_lfa"; };
 range { start $f3f0; end $f3f4; type bytetable; name "RING_pfa"; };
@@ -1016,25 +1051,25 @@ range { start $f4fd; end $f501; type bytetable; name "LOAD_pfa"; };
 range { start $f502; end $f505; type texttable; name "LOAD"; };
 range { start $f506; end $f507; type bytetable; };
 
-range { start $f54a; end $f54b; type addrtable; name "SAVEM\"_lfa"; };
-range { start $f54c; end $f550; type bytetable; name "SAVEM\"_pfa"; };
-range { start $f551; end $f556; type texttable; name "SAVEM\""; };
-range { start $f557; end $f559; type bytetable; };
+range { start $f54a; end $f54b; type addrtable; name "SAVEM_lfa"; };
+range { start $f54c; end $f550; type bytetable; name "SAVEM_pfa"; };
+range { start $f551; end $f555; type texttable; name "SAVEM"; };
+range { start $f556; end $f559; type bytetable; };
 
-range { start $f55d; end $f55e; type addrtable; name "SAVEO\"_lfa"; };
-range { start $f55f; end $f563; type bytetable; name "SAVEO\"_pfa"; };
-range { start $f564; end $f569; type texttable; name "SAVEO\""; };
-range { start $f56a; end $f56c; type bytetable; };
+range { start $f55d; end $f55e; type addrtable; name "SAVEO_lfa"; };
+range { start $f55f; end $f563; type bytetable; name "SAVEO_pfa"; };
+range { start $f564; end $f568; type texttable; name "SAVEO"; };
+range { start $f569; end $f56c; type bytetable; };
 
-range { start $f570; end $f571; type addrtable; name "SAVEU\"_lfa"; };
-range { start $f572; end $f576; type bytetable; name "SAVEU\"_pfa"; };
-range { start $f577; end $f57c; type texttable; name "SAVEU\""; };
-range { start $f57d; end $f57f; type bytetable; };
+range { start $f570; end $f571; type addrtable; name "SAVEU_lfa"; };
+range { start $f572; end $f576; type bytetable; name "SAVEU_pfa"; };
+range { start $f577; end $f57b; type texttable; name "SAVEU"; };
+range { start $f57c; end $f57f; type bytetable; };
 
-range { start $f583; end $f584; type addrtable; name "SAVE\"_lfa"; };
-range { start $f585; end $f589; type bytetable; name "SAVE\"_pfa"; };
-range { start $f58a; end $f58e; type texttable; name "SAVE\""; };
-range { start $f58f; end $f591; type bytetable; };
+range { start $f583; end $f584; type addrtable; name "SAVE_lfa"; };
+range { start $f585; end $f589; type bytetable; name "SAVE_pfa"; };
+range { start $f58a; end $f58d; type texttable; name "SAVE"; };
+range { start $f58e; end $f591; type bytetable; };
 
 range { start $f663; end $f664; type addrtable; name "BACKUP_lfa"; };
 range { start $f665; end $f669; type bytetable; name "BACKUP_pfa"; };
