@@ -1,0 +1,1984 @@
+]:
+	$8C:: Appel de la routine numero $0C de la table LC69C
+
+	Adresse: $DFB9
+	Type   : $01, Sous-type: $00
+	Token  : $00, Parametre: $00
+	LM Type: $8C, Longueur : $00 ($00)
+	Appel  : copie de $00 octets a partir de $DFC3
+
+RETURN:
+
+	Adresse: $DFC3
+	Type   : $01, Sous-type: $00
+	Token  : $01, Parametre: $00
+	LM Type: $80, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $DFD2
+
+END:
+
+	Adresse: $DFDF
+	Type   : $01, Sous-type: $00
+	Token  : $03, Parametre: $00
+	LM Type: $80, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $DFEB
+
+STOP:
+
+	Adresse: $DFEF
+	Type   : $01, Sous-type: $00
+	Token  : $04, Parametre: $00
+	LM Type: $80, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $DFFC
+
+':
+	$8E:: Appel de la routine numero $0E de la table LC69C
+
+	Adresse: $DFFF
+	Type   : $01, Sous-type: $00
+	Token  : $05, Parametre: $00
+	LM Type: $8E, Longueur : $00 ($00)
+	Appel  : copie de $00 octets a partir de $E009
+
+FOR:
+	$26: Appel de la routine numero $06 de la table LC69C
+	$28: Appel de la routine numero $08 de la table LC69C
+	$21: Appel de la routine numero $01 de la table LC69C
+	$70: Compiler la routine numero $31 de la table LE490
+	$31: Appel de la routine numero $11 de la table LC69C
+	$21: Appel de la routine numero $01 de la table LC69C
+	TYPE: $C0, LEN: $25 => JSR $E02F
+
+	Adresse: $E009
+	Type   : $01, Sous-type: $01
+	Token  : $08, Parametre: $00
+	LM Type: $C0, Longueur : $03 ($83)
+	Appel  : JSR $E01C
+
+REPEAT:
+
+	Adresse: $E06D
+	Type   : $01, Sous-type: $00
+	Token  : $09, Parametre: $00
+	LM Type: $80, Longueur : $00 ($00)
+	Appel  : copie de $00 octets a partir de $E07C
+
+COUNT:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $E07C
+	Type   : $01, Sous-type: $00
+	Token  : $0A, Parametre: $00
+	LM Type: $81, Longueur : $05 ($05)
+	Appel  : copie de $05 octets a partir de $E08A
+
+WHILE:
+	$84:: Appel de la routine numero $04 de la table LC69C
+
+	Adresse: $E0BD
+	Type   : $01, Sous-type: $00
+	Token  : $0B, Parametre: $00
+	LM Type: $84, Longueur : $07 ($07)
+	Appel  : copie de $07 octets a partir de $E0CB
+
+NEXT:
+	TYPE: $C1, LEN: $42 => JSR $E21A
+
+	Adresse: $E0D7
+	Type   : $01, Sous-type: $01
+	Token  : $0D, Parametre: $00
+	LM Type: $C1, Longueur : $03 ($83)
+	Appel  : JSR $E0E5
+
+UNTIL:
+	$84:: Appel de la routine numero $04 de la table LC69C
+
+	Adresse: $E224
+	Type   : $01, Sous-type: $00
+	Token  : $0E, Parametre: $00
+	LM Type: $84, Longueur : $05 ($05)
+	Appel  : copie de $05 octets a partir de $E232
+
+UNCOUNT:
+
+	Adresse: $E237
+	Type   : $01, Sous-type: $00
+	Token  : $0F, Parametre: $00
+	LM Type: $80, Longueur : $0B ($0B)
+	Appel  : copie de $0B octets a partir de $E247
+
+WEND:
+
+	Adresse: $E252
+	Type   : $01, Sous-type: $00
+	Token  : $10, Parametre: $00
+	LM Type: $80, Longueur : $01 ($01)
+	Appel  : copie de $01 octets a partir de $E25F
+
+^:
+
+	Adresse: $E260
+	Type   : $03, Sous-type: $64
+	Token  : $12, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E26A
+
+*:
+
+	Adresse: $E278
+	Type   : $03, Sous-type: $5F
+	Token  : $13, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E282
+
+/:
+
+	Adresse: $E286
+	Type   : $03, Sous-type: $5F
+	Token  : $14, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E290
+
++:
+
+	Adresse: $E294
+	Type   : $03, Sous-type: $5A
+	Token  : $15, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E29E
+
+-:
+
+	Adresse: $E2C6
+	Type   : $03, Sous-type: $5A
+	Token  : $16, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E2D0
+
+=:
+
+	Adresse: $E2D4
+	Type   : $03, Sous-type: $58
+	Token  : $17, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E2DE
+
+>=:
+
+	Adresse: $E2E2
+	Type   : $03, Sous-type: $58
+	Token  : $18, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E2ED
+
+<=:
+
+	Adresse: $E2F1
+	Type   : $03, Sous-type: $58
+	Token  : $19, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E2FC
+
+<>:
+
+	Adresse: $E300
+	Type   : $03, Sous-type: $58
+	Token  : $1A, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E30B
+
+>:
+
+	Adresse: $E30F
+	Type   : $03, Sous-type: $58
+	Token  : $1B, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E319
+
+<:
+
+	Adresse: $E31D
+	Type   : $03, Sous-type: $58
+	Token  : $1C, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E327
+
+XOR:
+
+	Adresse: $E3B9
+	Type   : $03, Sous-type: $55
+	Token  : $1D, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E3C5
+
+AND:
+
+	Adresse: $E3D4
+	Type   : $03, Sous-type: $52
+	Token  : $1E, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E3E0
+
+OR:
+
+	Adresse: $E3F7
+	Type   : $03, Sous-type: $50
+	Token  : $1F, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E402
+
+COS:
+
+	Adresse: $E52B
+	Type   : $02, Sous-type: $02
+	Token  : $80, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E537
+
+SIN:
+
+	Adresse: $E53B
+	Type   : $02, Sous-type: $02
+	Token  : $81, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E547
+
+ABS:
+
+	Adresse: $E54B
+	Type   : $02, Sous-type: $02
+	Token  : $82, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E557
+
+ATN:
+
+	Adresse: $E55E
+	Type   : $02, Sous-type: $02
+	Token  : $83, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E56A
+
+DEEK:
+
+	Adresse: $E56E
+	Type   : $02, Sous-type: $02
+	Token  : $84, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E57B
+
+DEG:
+
+	Adresse: $E58B
+	Type   : $02, Sous-type: $02
+	Token  : $85, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E597
+
+EXP:
+
+	Adresse: $E5A5
+	Type   : $02, Sous-type: $02
+	Token  : $86, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E5B1
+
+LN:
+
+	Adresse: $E5B5
+	Type   : $02, Sous-type: $02
+	Token  : $87, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E5C0
+
+LOG:
+
+	Adresse: $E5C4
+	Type   : $02, Sous-type: $02
+	Token  : $88, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E5D0
+
+PEEK:
+
+	Adresse: $E5D4
+	Type   : $02, Sous-type: $02
+	Token  : $89, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E5E1
+
+RAD:
+
+	Adresse: $E5ED
+	Type   : $02, Sous-type: $02
+	Token  : $8A, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E5F9
+
+RND:
+
+	Adresse: $E5FD
+	Type   : $02, Sous-type: $02
+	Token  : $8B, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E609
+
+SQR:
+
+	Adresse: $E60D
+	Type   : $02, Sous-type: $02
+	Token  : $8C, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E619
+
+TAN:
+
+	Adresse: $E61E
+	Type   : $02, Sous-type: $02
+	Token  : $8D, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E62A
+
+LOB$:
+
+	Adresse: $E62F
+	Type   : $02, Sous-type: $04
+	Token  : $8E, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E63C
+
+LO$:
+
+	Adresse: $E67B
+	Type   : $02, Sous-type: $04
+	Token  : $8F, Parametre: $00
+	LM Type: $80, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $E687
+
+UP$:
+
+	Adresse: $E68A
+	Type   : $02, Sous-type: $04
+	Token  : $90, Parametre: $00
+	LM Type: $80, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $E696
+
+BIN$:
+
+	Adresse: $E699
+	Type   : $02, Sous-type: $03
+	Token  : $91, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E6A6
+
+CHR$:
+
+	Adresse: $E6DA
+	Type   : $02, Sous-type: $03
+	Token  : $92, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E6E7
+
+HEX$:
+
+	Adresse: $E6F6
+	Type   : $02, Sous-type: $03
+	Token  : $93, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E703
+
+SPC$:
+
+	Adresse: $E740
+	Type   : $02, Sous-type: $03
+	Token  : $94, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E74D
+
+STR$:
+
+	Adresse: $E75F
+	Type   : $02, Sous-type: $03
+	Token  : $95, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E76C
+
+ASC:
+
+	Adresse: $E780
+	Type   : $02, Sous-type: $05
+	Token  : $96, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E78C
+
+LEN:
+
+	Adresse: $E79F
+	Type   : $02, Sous-type: $05
+	Token  : $97, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E7AB
+
+VAL:
+
+	Adresse: $E7B0
+	Type   : $02, Sous-type: $05
+	Token  : $98, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E7BC
+
+TRUE:
+
+	Adresse: $E7DB
+	Type   : $02, Sous-type: $00
+	Token  : $99, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E7E8
+
+FALSE:
+
+	Adresse: $E807
+	Type   : $02, Sous-type: $00
+	Token  : $9A, Parametre: $00
+	LM Type: $80, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $E815
+
+PI:
+
+	Adresse: $E818
+	Type   : $02, Sous-type: $00
+	Token  : $9B, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E823
+
+SGN:
+
+	Adresse: $E82D
+	Type   : $02, Sous-type: $02
+	Token  : $9C, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E839
+
+INT:
+
+	Adresse: $E851
+	Type   : $02, Sous-type: $02
+	Token  : $9D, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E85D
+
+KEY$:
+
+	Adresse: $E864
+	Type   : $02, Sous-type: $01
+	Token  : $9E, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E871
+
+RAND:
+
+	Adresse: $E88D
+	Type   : $02, Sous-type: $02
+	Token  : $9F, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E89A
+
+REM:
+	$8E:: Appel de la routine numero $0E de la table LC69C
+
+	Adresse: $E89F
+	Type   : $01, Sous-type: $00
+	Token  : $A0, Parametre: $00
+	LM Type: $8E, Longueur : $00 ($00)
+	Appel  : copie de $00 octets a partir de $E8AB
+
+GOTO:
+	$8D:: Appel de la routine numero $0D de la table LC69C
+
+	Adresse: $E8AB
+	Type   : $01, Sous-type: $00
+	Token  : $A1, Parametre: $00
+	LM Type: $8D, Longueur : $01 ($01)
+	Appel  : copie de $01 octets a partir de $E8B8
+
+GOSUB:
+	$8D:: Appel de la routine numero $0D de la table LC69C
+
+	Adresse: $E8B9
+	Type   : $01, Sous-type: $00
+	Token  : $A2, Parametre: $00
+	LM Type: $8D, Longueur : $04 ($04)
+	Appel  : copie de $04 octets a partir de $E8C7
+
+CLS:
+
+	Adresse: $E8D8
+	Type   : $01, Sous-type: $00
+	Token  : $A3, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $E8E4
+
+PRINT:
+	$23: Appel de la routine numero $03 de la table LC69C
+	TYPE: $C0, LEN: $12 => JSR $E8FC
+
+	Adresse: $E8E9
+	Type   : $01, Sous-type: $00
+	Token  : $A4, Parametre: $00
+	LM Type: $C0, Longueur : $00 ($00)
+	Appel  : copie de $00 octets a partir de $E8F9
+
+LPRINT:
+	TYPE: $C0, LEN: $0F => JSR $E9BC
+
+	Adresse: $E9AC
+	Type   : $01, Sous-type: $00
+	Token  : $A5, Parametre: $00
+	LM Type: $C0, Longueur : $00 ($00)
+	Appel  : copie de $00 octets a partir de $E9BC
+
+SPRINT:
+	TYPE: $C0, LEN: $0F => JSR $E9D1
+
+	Adresse: $E9C1
+	Type   : $01, Sous-type: $00
+	Token  : $A6, Parametre: $00
+	LM Type: $C0, Longueur : $00 ($00)
+	Appel  : copie de $00 octets a partir de $E9D1
+
+MPRINT:
+	TYPE: $C0, LEN: $0F => JSR $E9E6
+
+	Adresse: $E9D6
+	Type   : $01, Sous-type: $00
+	Token  : $A7, Parametre: $00
+	LM Type: $C0, Longueur : $00 ($00)
+	Appel  : copie de $00 octets a partir de $E9E6
+
+GET:
+	$23: Appel de la routine numero $03 de la table LC69C
+	$25: Appel de la routine numero $05 de la table LC69C
+	TYPE: $EF, LEN: $83 => JSR $F96F
+
+	Adresse: $E9EB
+	Type   : $01, Sous-type: $00
+	Token  : $A8, Parametre: $00
+	LM Type: $EF, Longueur : $29 ($A9)
+	Appel  : JSR $E9FA
+
+INPUT:
+	$27: Appel de la routine numero $07 de la table LC69C
+	TYPE: $EF, LEN: $83 => JSR $F995
+
+	Adresse: $EA11
+	Type   : $01, Sous-type: $00
+	Token  : $A9, Parametre: $00
+	LM Type: $EF, Longueur : $22 ($A2)
+	Appel  : JSR $EA21
+
+null:
+
+	Adresse: $EA7A
+	Type   : $01, Sous-type: $00
+	Token  : $AA, Parametre: $00
+	LM Type: $80, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $EA84
+
+IF:
+	$24: Appel de la routine numero $04 de la table LC69C
+	$B4:: Appel de la routine numero $14 de la table LC69C
+
+	Adresse: $EA87
+	Type   : $01, Sous-type: $00
+	Token  : $AB, Parametre: $00
+	LM Type: $B4, Longueur : $05 ($05)
+	Appel  : copie de $05 octets a partir de $EA93
+
+ERRGOTO:
+	$8D:: Appel de la routine numero $0D de la table LC69C
+
+	Adresse: $EA98
+	Type   : $01, Sous-type: $00
+	Token  : $AC, Parametre: $00
+	LM Type: $8D, Longueur : $03 ($83)
+	Appel  : JSR $EAA8
+
+MID$:
+
+	Adresse: $EACB
+	Type   : $02, Sous-type: $07
+	Token  : $AD, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EAD8
+
+LEFT$:
+
+	Adresse: $EB1F
+	Type   : $02, Sous-type: $06
+	Token  : $AE, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EB2D
+
+RIGHT$:
+
+	Adresse: $EB7B
+	Type   : $02, Sous-type: $06
+	Token  : $AF, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EB8A
+
+HIRES:
+
+	Adresse: $EBC0
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $00
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EBCE
+
+TEXT:
+
+	Adresse: $EBD4
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $01
+	LM Type: $80, Longueur : $02 ($02)
+	Appel  : copie de $02 octets a partir de $EBE1
+
+LIST:
+	TYPE: $C0, LEN: $0D => JSR $EBF1
+
+	Adresse: $EBE3
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $02
+	LM Type: $C0, Longueur : $00 ($00)
+	Appel  : copie de $00 octets a partir de $EBF1
+
+TRACE:
+	$90:: Appel de la routine numero $10 de la table LC69C
+
+	Adresse: $EC27
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $03
+	LM Type: $90, Longueur : $03 ($83)
+	Appel  : JSR $EC35
+
+WORD:
+
+	Adresse: $EC53
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $04
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EC60
+
+NEW:
+
+	Adresse: $ECAA
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $05
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $ECB6
+
+RUN:
+	TYPE: $C0, LEN: $19 => JSR $ECD6
+
+	Adresse: $ECBC
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $07
+	LM Type: $C0, Longueur : $03 ($83)
+	Appel  : JSR $ECC9
+
+OUPS:
+
+	Adresse: $ECE7
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $08
+	LM Type: $80, Longueur : $02 ($02)
+	Appel  : copie de $02 octets a partir de $ECF4
+
+HELP:
+
+	Adresse: $ECF6
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $09
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $ED03
+
+POKE:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$84:: Appel de la routine numero $04 de la table LC69C
+
+	Adresse: $ED08
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $0A
+	LM Type: $84, Longueur : $03 ($83)
+	Appel  : JSR $ED16
+
+DOKE:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $ED32
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $0B
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $ED40
+
+CALL:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $ED50
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $0C
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $ED5D
+
+PING:
+
+	Adresse: $ED63
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $0F
+	LM Type: $80, Longueur : $02 ($02)
+	Appel  : copie de $02 octets a partir de $ED70
+
+SHOOT:
+
+	Adresse: $ED72
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $10
+	LM Type: $80, Longueur : $02 ($02)
+	Appel  : copie de $02 octets a partir de $ED80
+
+EXPLODE:
+
+	Adresse: $ED82
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $11
+	LM Type: $80, Longueur : $02 ($02)
+	Appel  : copie de $02 octets a partir de $ED92
+
+ZAP:
+
+	Adresse: $ED94
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $12
+	LM Type: $80, Longueur : $02 ($02)
+	Appel  : copie de $02 octets a partir de $EDA0
+
+NMI:
+
+	Adresse: $EDA2
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $13
+	LM Type: $80, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $EDAE
+
+RESET:
+
+	Adresse: $EDB1
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $14
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EDBF
+
+WIDTH:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $EDD5
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $15
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $EDE3
+
+LWIDTH:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $EDF0
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $16
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $EDFF
+
+GRAB:
+
+	Adresse: $EE08
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $17
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EE15
+
+RELEASE:
+
+	Adresse: $EE19
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $18
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EE29
+
+LLIST:
+	TYPE: $C0, LEN: $0E => JSR $EE4B
+
+	Adresse: $EE3C
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $19
+	LM Type: $C0, Longueur : $00 ($00)
+	Appel  : copie de $00 octets a partir de $EE4B
+
+MLIST:
+	TYPE: $C0, LEN: $0E => JSR $EE5F
+
+	Adresse: $EE50
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $1A
+	LM Type: $C0, Longueur : $00 ($00)
+	Appel  : copie de $00 octets a partir de $EE5F
+
+SLIST:
+	TYPE: $C0, LEN: $0E => JSR $EE73
+
+	Adresse: $EE64
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $1B
+	LM Type: $C0, Longueur : $00 ($00)
+	Appel  : copie de $00 octets a partir de $EE73
+
+LFEED:
+	$90:: Appel de la routine numero $10 de la table LC69C
+
+	Adresse: $EE78
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $1C
+	LM Type: $90, Longueur : $03 ($83)
+	Appel  : JSR $EE86
+
+AIDE:
+
+	Adresse: $EE92
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $1D
+	LM Type: $80, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $EE9F
+
+FUNCTION:
+
+	Adresse: $EEA2
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $1E
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EEB3
+
+MOVE:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $EEBF
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $1F
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $EECE
+
+HIMEM:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $EEE6
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $20
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $EEF4
+
+CURSOR:
+	$90:: Appel de la routine numero $10 de la table LC69C
+
+	Adresse: $EEFA
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $21
+	LM Type: $90, Longueur : $03 ($83)
+	Appel  : JSR $EF09
+
+LOUT:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $EF13
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $22
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $EF20
+
+WAIT:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $EF26
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $23
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $EF33
+
+PATTERN:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $EF41
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $24
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $EF51
+
+DRV$:
+
+	Adresse: $EF58
+	Type   : $02, Sous-type: $01
+	Token  : $C0, Parametre: $27
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EF65
+
+EXT$:
+
+	Adresse: $EF78
+	Type   : $02, Sous-type: $01
+	Token  : $C0, Parametre: $29
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EF85
+
+EXT:
+	$82:: Appel de la routine numero $02 de la table LC69C
+
+	Adresse: $EF91
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $2A
+	LM Type: $82, Longueur : $03 ($83)
+	Appel  : JSR $EF9D
+
+TCOPY:
+
+	Adresse: $EFB1
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $2B
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EFBF
+
+HCOPY:
+
+	Adresse: $EFC6
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $2C
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EFD4
+
+AZERTY:
+
+	Adresse: $EFDA
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $34
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EFE9
+
+QWERTY:
+
+	Adresse: $EFEE
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $35
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $EFFD
+
+FRENCH:
+
+	Adresse: $F002
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $36
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $F011
+
+ACCENT:
+	$90:: Appel de la routine numero $10 de la table LC69C
+
+	Adresse: $F016
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $37
+	LM Type: $90, Longueur : $03 ($83)
+	Appel  : JSR $F025
+
+DELETE:
+	TYPE: $C0, LEN: $12 => JSR $F041
+
+	Adresse: $F02E
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $38
+	LM Type: $C0, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $F03E
+
+ASCII:
+
+	Adresse: $F044
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $3D
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $F052
+
+TALK:
+	$90:: Appel de la routine numero $10 de la table LC69C
+
+	Adresse: $F086
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $3E
+	LM Type: $90, Longueur : $03 ($83)
+	Appel  : JSR $F093
+
+CLOCKOFF:
+
+	Adresse: $F09E
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $48
+	LM Type: $80, Longueur : $02 ($02)
+	Appel  : copie de $02 octets a partir de $F0AF
+
+CLOCKSET:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F0B1
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $49
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F0C2
+
+SSPEED:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F0C8
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $4A
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F0D7
+
+SMODE:
+	$82:: Appel de la routine numero $02 de la table LC69C
+
+	Adresse: $F124
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $4B
+	LM Type: $82, Longueur : $03 ($83)
+	Appel  : JSR $F132
+
+ERRLIST:
+
+	Adresse: $F194
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $4C
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $F1A4
+
+TIME:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F1E0
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $4D
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F1EE
+
+TIME$:
+
+	Adresse: $F20E
+	Type   : $02, Sous-type: $01
+	Token  : $C0, Parametre: $4E
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $F21C
+
+LBUF:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F25C
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $4F
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F26A
+
+SRBUF:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F27E
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $50
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F28D
+
+SEBUF:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F291
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $51
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F2A0
+
+PLOT:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$82:: Appel de la routine numero $02 de la table LC69C
+
+	Adresse: $F2A4
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $52
+	LM Type: $82, Longueur : $03 ($83)
+	Appel  : JSR $F2B3
+
+POP:
+
+	Adresse: $F2E1
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $53
+	LM Type: $80, Longueur : $05 ($05)
+	Appel  : copie de $05 octets a partir de $F2ED
+
+SSAVEA:
+	TYPE: $C0, LEN: $CA => JSR $F3BD
+
+	Adresse: $F2F2
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $54
+	LM Type: $C0, Longueur : $03 ($83)
+	Appel  : JSR $F302
+
+SLOADA:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F309
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $55
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F318
+
+SLOAD:
+
+	Adresse: $F33B
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $56
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $F349
+
+SSAVE:
+	$22: Appel de la routine numero $02 de la table LC69C
+	TYPE: $C0, LEN: $9B => JSR $F3EB
+
+	Adresse: $F34F
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $57
+	LM Type: $C0, Longueur : $03 ($83)
+	Appel  : JSR $F35F
+
+SDUMP:
+
+	Adresse: $F366
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $58
+	LM Type: $80, Longueur : $02 ($02)
+	Appel  : copie de $02 octets a partir de $F374
+
+CONSOLE:
+
+	Adresse: $F376
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $5A
+	LM Type: $80, Longueur : $02 ($02)
+	Appel  : copie de $02 octets a partir de $F386
+
+MLOADA:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F388
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $5B
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F397
+
+MSAVEA:
+	TYPE: $C0, LEN: $16 => JSR $F3BD
+
+	Adresse: $F3A6
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $5C
+	LM Type: $C0, Longueur : $03 ($83)
+	Appel  : JSR $F3B6
+
+MLOAD:
+
+	Adresse: $F3C0
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $5D
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $F3CE
+
+MSAVE:
+	$22: Appel de la routine numero $02 de la table LC69C
+	TYPE: $C0, LEN: $16 => JSR $F3EB
+
+	Adresse: $F3D4
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $5E
+	LM Type: $C0, Longueur : $03 ($83)
+	Appel  : JSR $F3E4
+
+RING:
+
+	Adresse: $F3EE
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $5F
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $F3FB
+
+CONNECT:
+
+	Adresse: $F408
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $60
+	LM Type: $80, Longueur : $02 ($02)
+	Appel  : copie de $02 octets a partir de $F418
+
+WCXFIN:
+
+	Adresse: $F41A
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $61
+	LM Type: $80, Longueur : $02 ($02)
+	Appel  : copie de $02 octets a partir de $F429
+
+UNCONNECT:
+
+	Adresse: $F42B
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $62
+	LM Type: $80, Longueur : $02 ($02)
+	Appel  : copie de $02 octets a partir de $F43D
+
+SOUT:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F43F
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $63
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F44C
+
+MOUT:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F452
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $64
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F45F
+
+POS:
+
+	Adresse: $F465
+	Type   : $02, Sous-type: $02
+	Token  : $C0, Parametre: $65
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $F471
+
+DIR:
+	$96:: Appel de la routine numero $16 de la table LC69C
+
+	Adresse: $F484
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $68
+	LM Type: $96, Longueur : $03 ($83)
+	Appel  : JSR $F490
+
+DELBAK:
+	$96:: Appel de la routine numero $16 de la table LC69C
+
+	Adresse: $F494
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $6A
+	LM Type: $96, Longueur : $03 ($83)
+	Appel  : JSR $F4A3
+
+DEL:
+	$96:: Appel de la routine numero $16 de la table LC69C
+
+	Adresse: $F4A7
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $70
+	LM Type: $96, Longueur : $03 ($83)
+	Appel  : JSR $F4B3
+
+PROT:
+	$96:: Appel de la routine numero $16 de la table LC69C
+
+	Adresse: $F4B7
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $71
+	LM Type: $96, Longueur : $03 ($83)
+	Appel  : JSR $F4C4
+
+UNPROT:
+	$96:: Appel de la routine numero $16 de la table LC69C
+
+	Adresse: $F4C8
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $72
+	LM Type: $96, Longueur : $03 ($83)
+	Appel  : JSR $F4D7
+
+INIT:
+
+	Adresse: $F4E1
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $33
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $F4EE
+
+LOAD:
+	$82:: Appel de la routine numero $02 de la table LC69C
+
+	Adresse: $F4FB
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $74
+	LM Type: $82, Longueur : $03 ($83)
+	Appel  : JSR $F508
+
+SAVEM:
+	$22: Appel de la routine numero $02 de la table LC69C
+	TYPE: $C0, LEN: $4A => JSR $F595
+
+	Adresse: $F54A
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $75
+	LM Type: $C0, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $F55A
+
+SAVEO:
+	$22: Appel de la routine numero $02 de la table LC69C
+	TYPE: $C0, LEN: $37 => JSR $F595
+
+	Adresse: $F55D
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $76
+	LM Type: $C0, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $F56D
+
+SAVEU:
+	$22: Appel de la routine numero $02 de la table LC69C
+	TYPE: $C0, LEN: $24 => JSR $F595
+
+	Adresse: $F570
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $77
+	LM Type: $C0, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $F580
+
+SAVE:
+	$22: Appel de la routine numero $02 de la table LC69C
+	TYPE: $C0, LEN: $11 => JSR $F595
+
+	Adresse: $F583
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $78
+	LM Type: $C0, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $F592
+
+BACKUP:
+
+	Adresse: $F663
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $79
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $F672
+
+LDIR:
+	$96:: Appel de la routine numero $16 de la table LC69C
+
+	Adresse: $F690
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $7B
+	LM Type: $96, Longueur : $03 ($83)
+	Appel  : JSR $F69D
+
+DNAME:
+	$82:: Appel de la routine numero $02 de la table LC69C
+
+	Adresse: $F6B1
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $7C
+	LM Type: $82, Longueur : $03 ($83)
+	Appel  : JSR $F6BF
+
+COPYO:
+	TYPE: $C0, LEN: $45 => JSR $F70A
+
+	Adresse: $F6C4
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $7D
+	LM Type: $C0, Longueur : $03 ($83)
+	Appel  : JSR $F6D3
+
+COPYM:
+	TYPE: $C0, LEN: $32 => JSR $F70A
+
+	Adresse: $F6D7
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $7E
+	LM Type: $C0, Longueur : $03 ($83)
+	Appel  : JSR $F6E6
+
+COPY:
+	TYPE: $C0, LEN: $1F => JSR $F70A
+
+	Adresse: $F6EA
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $7F
+	LM Type: $C0, Longueur : $03 ($83)
+	Appel  : JSR $F6F8
+
+REN:
+	TYPE: $C0, LEN: $2A => JSR $F738
+
+	Adresse: $F70D
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $80
+	LM Type: $C0, Longueur : $03 ($83)
+	Appel  : JSR $F71A
+
+ESAVE:
+	$82:: Appel de la routine numero $02 de la table LC69C
+
+	Adresse: $F74F
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $83
+	LM Type: $82, Longueur : $03 ($83)
+	Appel  : JSR $F75D
+
+OPEN:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$82:: Appel de la routine numero $02 de la table LC69C
+
+	Adresse: $F765
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $84
+	LM Type: $82, Longueur : $03 ($83)
+	Appel  : JSR $F774
+
+CLOSE:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F792
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $85
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F7A0
+
+PUT:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F809
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $86
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F816
+
+TAKE:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F81A
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $87
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F828
+
+JUMP:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F84B
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $88
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F859
+
+APPEND:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F85D
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $89
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F86C
+
+REWIND:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F870
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $8A
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F87F
+
+SPUT:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$84:: Appel de la routine numero $04 de la table LC69C
+
+	Adresse: $F889
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $8B
+	LM Type: $84, Longueur : $03 ($83)
+	Appel  : JSR $F897
+
+STAKE:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$27: Appel de la routine numero $07 de la table LC69C
+	TYPE: $EF, LEN: $83 => JSR $10835
+
+	Adresse: $F8B1
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $8C
+	LM Type: $EF, Longueur : $20 ($20)
+	Appel  : copie de $20 octets a partir de $F8C2
+
+FST:
+
+	Adresse: $F8EE
+	Type   : $02, Sous-type: $02
+	Token  : $C0, Parametre: $8F
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $F8FA
+
+FILE:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $F90D
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $90
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $F91A
+
+MERGE:
+	$82:: Appel de la routine numero $02 de la table LC69C
+
+	Adresse: $F94E
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $91
+	LM Type: $82, Longueur : $03 ($83)
+	Appel  : JSR $F95C
+
+CURSET:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FA36
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $A0
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FA47
+
+CURMOV:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FA4B
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $A1
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FA5C
+
+DRAW:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FA60
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $A2
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FA6F
+
+ADRAW:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FA76
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $A3
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FA88
+
+CIRCLE:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FA8E
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $A4
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FA9E
+
+BOX:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FAA4
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $A5
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FAB2
+
+ABOX:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FAB6
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $A6
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FAC7
+
+PAPER:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FACB
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $A7
+	LM Type: $81, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $FAD9
+
+INK:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FADC
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $A8
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FAE8
+
+RADIAN:
+
+	Adresse: $FB06
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $A9
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $FB15
+
+DEGRE:
+
+	Adresse: $FB1E
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $AA
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $FB2C
+
+CLCH:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FB35
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $AC
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FB43
+
+OPCH:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FB69
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $AD
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FB77
+
+CROSSX:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FB90
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $AE
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FBA2
+
+CROSS:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FBF2
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $AF
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FC01
+
+RANDOM:
+
+	Adresse: $FC22
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $B0
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $FC31
+
+WINDOW:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FC47
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $B1
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FC5A
+
+PLAY:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FC8C
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $B2
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FC9C
+
+SOUND:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FCA0
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $B3
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FCB0
+
+MUSIC:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FCB6
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $B4
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FCC7
+
+LORES:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FCD1
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $B6
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FCDF
+
+LPR:
+	$90:: Appel de la routine numero $10 de la table LC69C
+
+	Adresse: $FCFA
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $B7
+	LM Type: $90, Longueur : $03 ($83)
+	Appel  : JSR $FD06
+
+SEI:
+
+	Adresse: $FD14
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $B8
+	LM Type: $80, Longueur : $01 ($01)
+	Appel  : copie de $01 octets a partir de $FD20
+
+CLI:
+
+	Adresse: $FD21
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $B9
+	LM Type: $80, Longueur : $01 ($01)
+	Appel  : copie de $01 octets a partir de $FD2D
+
+ERRNB:
+
+	Adresse: $FD2E
+	Type   : $02, Sous-type: $00
+	Token  : $C0, Parametre: $C0
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $FD3C
+
+ERRNL:
+
+	Adresse: $FD43
+	Type   : $02, Sous-type: $00
+	Token  : $C0, Parametre: $C1
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $FD51
+
+ERROR:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FD5A
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $C2
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FD68
+
+RESUME:
+
+	Adresse: $FD6F
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $C3
+	LM Type: $80, Longueur : $03 ($03)
+	Appel  : copie de $03 octets a partir de $FD7E
+
+ERROFF:
+
+	Adresse: $FD81
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $C4
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $FD90
+
+CLEAR:
+
+	Adresse: $FD97
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $C5
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $FDA5
+
+VCOPY:
+
+	Adresse: $FE09
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $C6
+	LM Type: $80, Longueur : $02 ($02)
+	Appel  : copie de $02 octets a partir de $FE17
+
+DIM:
+	$87:: Appel de la routine numero $07 de la table LC69C
+
+	Adresse: $FE19
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $CC
+	LM Type: $87, Longueur : $00 ($00)
+	Appel  : copie de $00 octets a partir de $FE25
+
+FRE:
+
+	Adresse: $FE25
+	Type   : $02, Sous-type: $00
+	Token  : $C0, Parametre: $CD
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $FE31
+
+PAGE$:
+
+	Adresse: $FE42
+	Type   : $02, Sous-type: $01
+	Token  : $C0, Parametre: $CE
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $FE50
+
+SERVEUR:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FE5C
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $CF
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FE6C
+
+MINITEL:
+
+	Adresse: $FE75
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $D0
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $FE85
+
+APLIC:
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FE96
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $D1
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FEA4
+
+TINPUT:
+	TYPE: $C0, LEN: $1F => JSR $FEDD
+
+	Adresse: $FEBD
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $D2
+	LM Type: $C0, Longueur : $03 ($83)
+	Appel  : JSR $FECD
+
+MIDDLE$:
+
+	Adresse: $FF02
+	Type   : $02, Sous-type: $06
+	Token  : $C0, Parametre: $D4
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $FF12
+
+NOT:
+
+	Adresse: $FF32
+	Type   : $02, Sous-type: $02
+	Token  : $C0, Parametre: $D5
+	LM Type: $80, Longueur : $03 ($83)
+	Appel  : JSR $FF3E
+
+FILL:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FF48
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $D6
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FF57
+
+CHAR:
+	$01: Appel de la routine numero $01 de la table LC69C
+	$01: Appel de la routine numero $01 de la table LC69C
+	$81:: Appel de la routine numero $01 de la table LC69C
+
+	Adresse: $FF5E
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $D7
+	LM Type: $81, Longueur : $03 ($83)
+	Appel  : JSR $FF6D
+
+SCHAR:
+	$82:: Appel de la routine numero $02 de la table LC69C
+
+	Adresse: $FF74
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $D8
+	LM Type: $82, Longueur : $03 ($83)
+	Appel  : JSR $FF82
+
+CONT:
+
+	Adresse: $FF8B
+	Type   : $01, Sous-type: $00
+	Token  : $C0, Parametre: $D9
+	LM Type: $80, Longueur : $0C ($0C)
+	Appel  : copie de $0C octets a partir de $FF98
