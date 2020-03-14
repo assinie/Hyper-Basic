@@ -116,6 +116,9 @@ def list_source(fname):
         address = start
         indent = 2
         step = 0
+
+        # print(chr(27)+'[2J'+chr(27)+'[38;5;15m'+chr(27)+'[48;5;8m')
+
         while address < table_start-1:
             offset = ord(fsource.read(1))
             line_n = struct.unpack('<H', fsource.read(2))[0]
@@ -220,6 +223,7 @@ def load_table(fname):
                 entry = entry_val[0:entry_len-7]
 
             table[entry_id] = controle_car(entry)
+            #table[entry_id] = entry
 
             debug('')
             address = offset
@@ -510,7 +514,7 @@ def load_tokens():
 def controle_car(chaine):
     csi = chr(27)+'['
     accents = {
-        '`': chr(184),
+        '`': '\xc2\xa9',
         '@': 'à',
         '{': 'é',
         '}': 'è',
@@ -523,6 +527,8 @@ def controle_car(chaine):
     for i in range(0, 8):
         couleurs[chr(0x90+i)] = csi+('1;%sm' % (i+40))+' '
         couleurs[chr(0x80+i)] = csi+('1;%sm' % (i+30))+' '
+        # couleurs[chr(0x90+i)] = csi+('%sm' % (i+100))+' '
+        # couleurs[chr(0x80+i)] = csi+('%sm' % (i+30))+' '
 
     for code, car in accents.items():
         chaine = chaine.replace(code, car)
