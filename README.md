@@ -6,6 +6,7 @@ Cartouche Hyper-Basic V 2.0b pour Telestrat
 - Le code source a été généré avec da65 à partir d'un dump de la cartouche et commenté par Christian Lardière
 
 ## Arborescence
-- src : Sources pour xa
 - original : Image de la cartouche
-
+- src : Sources pour xa
+- tests : Fichiers de tests
+- utils : Utilitaires divers

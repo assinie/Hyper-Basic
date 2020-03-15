@@ -5,10 +5,10 @@ from __future__ import print_function
 
 from pprint import pprint
 
-import stat    # for file properties
-import os      # for filesystem modes (O_RDONLY, etc)
-import errno   # for error number codes (ENOENT, etc)
-               # - note: these must be returned as negatives
+import stat     # for file properties
+import os       # for filesystem modes (O_RDONLY, etc)
+import errno    # for error number codes (ENOENT, etc)
+
 import sys
 
 import struct   # Pour unpack
@@ -20,19 +20,19 @@ import argparse
 __version__ = '0.1'
 
 
-FILTER=''.join([(len(repr(chr(x)))==3) and chr(x) or '.' for x in range(256)])
+FILTER = ''.join([(len(repr(chr(x))) == 3) and chr(x) or '.' for x in range(256)])
 fDebug = False
+
 
 def hyperbasic_dump(fname):
 
-    with open(fname,"rb") as fsource:
+    with open(fname, "rb") as fsource:
 
         #                    +---+---------------------------------------------------------> Addresse debut chargement
         #                    |   | +---+---------------------------------------------------> Adresse fin chargement
         #                    |   | |   | +----------------+--------------------------------> ???
         #                    |   | |   | |                | +---+--------------------------> Adresse debut des variables
         # 00000000  a0 0f ff 00 08 b3 10 18  39 26 39 00 40 db 0b 00  |........9&9.@...|
-
 
         header = fsource.read(16)
 
@@ -49,11 +49,11 @@ def hyperbasic_dump(fname):
             return False
 
         address = start
-        while address < table-1:
+        while address < table - 1:
             offset = ord(fsource.read(1))
             line_n = struct.unpack('<H', fsource.read(2))[0]
             lm_len = ord(fsource.read(1))
-            line = fsource.read(offset-4)
+            line = fsource.read(offset - 4)
 
             print('%d: %04x %02x' % (line_n, address, offset))
             print(dump(line))
@@ -81,7 +81,7 @@ def hyperbasic_dump(fname):
 
             address += 7
 
-            entry_val = fsource.read(offset-address)
+            entry_val = fsource.read(offset - address)
 
             print(dump(entry_val))
 
@@ -101,7 +101,7 @@ def list_source(fname):
 
     # pprint(table)
 
-    with open(fname,"rb") as fsource:
+    with open(fname, "rb") as fsource:
 
         header = fsource.read(16)
 
@@ -119,27 +119,27 @@ def list_source(fname):
 
         # print(chr(27)+'[2J'+chr(27)+'[38;5;15m'+chr(27)+'[48;5;8m')
 
-        while address < table_start-1:
+        while address < table_start - 1:
             offset = ord(fsource.read(1))
             line_n = struct.unpack('<H', fsource.read(2))[0]
             lm_len = ord(fsource.read(1))
-            line = fsource.read(offset-4)
+            line = fsource.read(offset - 4)
 
             ptr = 0
             source = ''
             while ptr < len(line):
                 token = ord(line[ptr])
                 if token >= 0xd0:
-                    inst = table[struct.unpack('<H', line[ptr:ptr+2])[0]]
+                    inst = table[struct.unpack('<H', line[ptr:ptr + 2])[0]]
                     ptr += 1
                 elif token == 0xc0:
-                    inst = tokens[token][ord(line[ptr+1])]
+                    inst = tokens[token][ord(line[ptr + 1])]
                     ptr += 1
                 else:
                     if token in tokens:
                         inst = tokens[token]
                     else:
-                        #inst = chr(token)
+                        # inst = chr(token)
                         inst = '[$%02x]' % token
 
                 if inst in [']', "'", 'RETURN', 'END'] and source == '':
@@ -153,16 +153,16 @@ def list_source(fname):
                     step = 1
 
                 if inst:
-                    if token in range(29,32) or token >=178 and token <=181:
-                        source = source + ' ' + inst +' '
-                    elif token in range(5,15) or token in range(160, 173) or token == 192:
+                    if token in range(29, 32) or token >= 178 and token <= 181:
+                        source = source + ' ' + inst + ' '
+                    elif token in range(5, 15) or token in range(160, 173) or token == 192:
                         source = source + inst + ' '
                     else:
                         source = source + inst
 
                 ptr += 1
 
-            print('%5d %s' % (line_n, ' '*indent+source))
+            print('%5d %s' % (line_n, ' ' * indent + source))
 
             indent += step
             step = 0
@@ -171,18 +171,18 @@ def list_source(fname):
 
     return
 
+
 def load_table(fname):
 
     table = {}
 
-    with open(fname,"rb") as fsource:
+    with open(fname, "rb") as fsource:
 
         #                    +---+---------------------------------------------------------> Addresse debut chargement
         #                    |   | +---+---------------------------------------------------> Adresse fin chargement
         #                    |   | |   | +----------------+--------------------------------> ???
         #                    |   | |   | |                | +---+--------------------------> Adresse debut des variables
         # 00000000  a0 0f ff 00 08 b3 10 18  39 26 39 00 40 db 0b 00  |........9&9.@...|
-
 
         header = fsource.read(16)
 
@@ -197,7 +197,7 @@ def load_table(fname):
         if start != 0x0800:
             return False
 
-        fsource.seek(table_start-0x800+0x10, 0)
+        fsource.seek(table_start - 0x800 + 0x10, 0)
         address = table_start
 
         entry_type = -1
@@ -208,27 +208,26 @@ def load_table(fname):
             entry_id = struct.unpack('<H', fsource.read(2))[0]
             entry_len = ord(fsource.read(1))
 
-            #debug('%04x: %04x %02x:%02x %02x' % (address, offset, entry_type, entry_subtype, entry_len))
+            # debug('%04x: %04x %02x:%02x %02x' % (address, offset, entry_type, entry_subtype, entry_len))
 
             address += 7
 
-            entry_val = fsource.read(offset-address)
+            entry_val = fsource.read(offset - address)
 
             debug(dump(entry_val))
 
-
             if entry_type == 0x10:
-                entry = '"' + entry_val[0:entry_len-7] +'"'
+                entry = '"' + entry_val[0:entry_len - 7] + '"'
             else:
-                entry = entry_val[0:entry_len-7]
+                entry = entry_val[0:entry_len - 7]
 
             table[entry_id] = controle_car(entry)
-            #table[entry_id] = entry
+            # table[entry_id] = entry
 
             debug('')
             address = offset
-
     return table
+
 
 def load_tokens():
     tokens = {}
@@ -342,7 +341,7 @@ def load_tokens():
     tokens[167] = 'MPRINT'
     tokens[168] = 'GET'
     tokens[169] = 'INPUT'
-    # null
+    # null
     tokens[170] = ''
     tokens[171] = 'IF'
     tokens[172] = 'ERRGOTO'
@@ -511,8 +510,9 @@ def load_tokens():
 
     return tokens
 
+
 def controle_car(chaine):
-    csi = chr(27)+'['
+    csi = chr(27) + '['
     accents = {
         '`': '\xc2\xa9',
         '@': 'à',
@@ -521,14 +521,14 @@ def controle_car(chaine):
         '~': 'ê',
         '|': 'ù',
         '\\': 'ç'
-        }
+    }
 
     couleurs = {}
     for i in range(0, 8):
-        couleurs[chr(0x90+i)] = csi+('1;%sm' % (i+40))+' '
-        couleurs[chr(0x80+i)] = csi+('1;%sm' % (i+30))+' '
-        # couleurs[chr(0x90+i)] = csi+('%sm' % (i+100))+' '
-        # couleurs[chr(0x80+i)] = csi+('%sm' % (i+30))+' '
+        couleurs[chr(0x90 + i)] = csi + ('1;%sm' % (i + 40)) + ' '
+        couleurs[chr(0x80 + i)] = csi + ('1;%sm' % (i + 30)) + ' '
+        # couleurs[chr(0x90+i)] = csi+('%sm' % (i+100))+' '
+        # couleurs[chr(0x80+i)] = csi+('%sm' % (i+30))+' '
 
     for code, car in accents.items():
         chaine = chaine.replace(code, car)
@@ -537,7 +537,7 @@ def controle_car(chaine):
         chaine = chaine.replace(code, car)
 
     if chr(27) in chaine:
-        chaine += csi+'0m'
+        chaine += csi + '0m'
 
     chaine = chaine.replace('{', 'é')
 
@@ -545,14 +545,16 @@ def controle_car(chaine):
 
 
 def dump(src, offset=0, length=16):
-    N=0; result=''
+    N = 0
+    result = ''
     while src:
-        s,src = src[:length],src[length:]
-        hexa = ' '.join(["%02X"%ord(x) for x in s])
+        s, src = src[:length], src[length:]
+        hexa = ' '.join(["%02X" % ord(x) for x in s])
         s = s.translate(FILTER)
-        result += "%04X   %-*s   %s\n" % (N+offset, length*3, hexa, s)
-        N+=length
+        result += "%04X   %-*s   %s\n" % (N + offset, length * 3, hexa, s)
+        N += length
     return result
+
 
 def debug(chaine):
     if fDebug:
@@ -566,7 +568,7 @@ def main():
 
     parser.add_argument('file', type=str, nargs='+', metavar='file', help='Hyperbasic filename')
     parser.add_argument('--color', '-c', default=False, action='store_true', help='Color output')
-    parser.add_argument('--version', '-v', action='version', version= '%%(prog)s v%s' % __version__)
+    parser.add_argument('--version', '-v', action='version', version='%%(prog)s v%s' % __version__)
 
     args = parser.parse_args()
 
@@ -577,4 +579,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
