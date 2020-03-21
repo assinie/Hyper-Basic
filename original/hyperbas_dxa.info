@@ -121,6 +121,7 @@ label { addr $0417; name "BNKCID"; };
 # Page 05
 ############################################################
 label { addr $0500; name "DRIVE"; comment "N° de lecteur"; };
+label { addr $0512; name "ERRNB"; comment "Erreur NB de Stratsed"; };
 label { addr $0517; size 13; name "BUFNOM"; comment "Nom de fichier (drive+nom+extension)"; };
 label { addr $0528; name "VASALO0"; comment "Flag lecture/écriture"; };
 label { addr $052c; name "FTYPE"; comment "Type du fichier"; };
